@@ -7,6 +7,7 @@ import { merchantLookup, splitIntoBatches, applyCategorizationResults } from '@/
 import { aggregateByCategory, getTotalIncome, getTotalExpenses, getTopMerchants } from '@/lib/analysis/aggregator';
 import { computeGamificationReport } from '@/lib/analysis/gamification';
 import { v4 as uuidv4 } from 'uuid';
+import { saveReport, saveTransactions } from '@/lib/db/dexie';
 
 export type AnalysisStep =
   | 'idle'
@@ -202,6 +203,8 @@ export function useAnalysis() {
           ],
         };
 
+        await saveTransactions(categorized);
+        await saveReport(finalReport);
         setReport(finalReport);
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Analysis failed';

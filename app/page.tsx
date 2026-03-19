@@ -21,6 +21,13 @@ export default function Home() {
   const [previousNetWorth, setPreviousNetWorth] = useState('');
   const { progress, report, error, runAnalysis } = useAnalysis();
 
+  useEffect(() => {
+    import('@/lib/db/dexie').then(({ hasAnyData }) =>
+      hasAnyData().then((has) => { if (has) router.push('/dashboard'); })
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleCSVParsed = (parsed: ParsedCSV) => {
     setCsv(parsed);
     setStep('mapping');
@@ -43,8 +50,7 @@ export default function Home() {
 
   useEffect(() => {
     if (report && step === 'processing') {
-      sessionStorage.setItem('cfo-report', JSON.stringify(report));
-      router.push('/presentation');
+      router.push('/dashboard');
     }
   }, [report, step, router]);
 

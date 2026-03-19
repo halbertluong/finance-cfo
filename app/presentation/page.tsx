@@ -14,31 +14,17 @@ import { CFOScoreSlide } from '@/components/slides/slides/CFOScoreSlide';
 import { AchievementsSlide } from '@/components/slides/slides/AchievementsSlide';
 import { SignOffSlide } from '@/components/slides/slides/SignOffSlide';
 import { AnalysisReport } from '@/models/types';
+import { loadLatestReport } from '@/lib/db/dexie';
 
 export default function PresentationPage() {
   const router = useRouter();
   const [report, setReport] = useState<AnalysisReport | null>(null);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem('cfo-report');
-    if (!stored) {
-      router.push('/');
-      return;
-    }
-    try {
-      const parsed = JSON.parse(stored);
-      // Rehydrate date objects
-      parsed.periodStart = new Date(parsed.periodStart);
-      parsed.periodEnd = new Date(parsed.periodEnd);
-      parsed.generatedAt = new Date(parsed.generatedAt);
-      parsed.transactions = parsed.transactions.map((t: { date: string }) => ({
-        ...t,
-        date: new Date(t.date),
-      }));
-      setReport(parsed);
-    } catch {
-      router.push('/');
-    }
+    loadLatestReport().then((r) => {
+      if (!r) { router.push('/'); return; }
+      setReport(r);
+    }).catch(() => router.push('/'));
   }, [router]);
 
   if (!report) {

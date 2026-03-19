@@ -64,9 +64,63 @@ export interface Account {
 }
 
 export interface AccountBalance {
+  id: string;
   accountId: string;
   balance: number;
   date: Date;
+  note?: string;
+}
+
+// ─── Budgets ──────────────────────────────────────────────────────────────────
+
+export interface Budget {
+  id: string;
+  categoryId: string;
+  monthKey: string; // 'YYYY-MM'
+  amount: number;
+  rollover: boolean;
+  createdAt: Date;
+}
+
+export interface BudgetStatus {
+  budget: Budget;
+  spent: number;
+  remaining: number;
+  percentUsed: number;
+  isOver: boolean;
+  rolloverAmount: number;
+}
+
+// ─── Goals ────────────────────────────────────────────────────────────────────
+
+export interface Goal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline?: Date;
+  color: string;
+  icon: string;
+  createdAt: Date;
+  completedAt?: Date;
+}
+
+// ─── Recurring Transactions ───────────────────────────────────────────────────
+
+export type RecurringFrequency = 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'annual';
+
+export interface RecurringTransaction {
+  id: string;
+  merchantName: string;
+  normalizedMerchant: string;
+  categoryId: string;
+  amount: number;
+  frequency: RecurringFrequency;
+  nextDueDate?: Date;
+  lastSeenDate?: Date;
+  active: boolean;
+  isManuallyAdded: boolean;
+  autoDetected: boolean;
 }
 
 export interface NetWorthSnapshot {
