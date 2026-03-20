@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, ArrowLeftRight, PiggyBank, TrendingUp,
-  Target, RefreshCw, Upload, Presentation, ChevronRight,
+  Target, RefreshCw, Upload, Presentation, ChevronRight, Download,
 } from 'lucide-react';
+import { loadTransactions } from '@/lib/db/dexie';
 
 const NAV_ITEMS = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -15,6 +16,30 @@ const NAV_ITEMS = [
   { href: '/goals', icon: Target, label: 'Goals' },
   { href: '/recurring', icon: RefreshCw, label: 'Recurring' },
 ];
+
+async function exportTransactionsCSV() {
+  const transactions = await loadTransactions();
+  if (transactions.length === 0) return;
+  const headers = ['date', 'description', 'merchant', 'amount', 'type', 'category', 'account', 'tags'];
+  const rows = transactions.map((t) => [
+    new Date(t.date).toISOString().split('T')[0],
+    `"${t.description.replace(/"/g, '""')}"`,
+    `"${t.normalizedMerchant.replace(/"/g, '""')}"`,
+    t.amount,
+    t.type,
+    t.categoryId,
+    t.accountId,
+    `"${t.tags.join(', ')}"`,
+  ]);
+  const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `transactions-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -61,6 +86,13 @@ export function AppSidebar() {
           <Upload className="w-4 h-4" />
           Import CSV
         </Link>
+        <button
+          onClick={exportTransactionsCSV}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-white/40 hover:text-white/70 hover:bg-white/5 transition-all"
+        >
+          <Download className="w-4 h-4" />
+          Export Data
+        </button>
         <Link
           href="/presentation"
           className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 transition-all"
