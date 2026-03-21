@@ -7,7 +7,7 @@ import { merchantLookup, splitIntoBatches, applyCategorizationResults } from '@/
 import { aggregateByCategory, getTotalIncome, getTotalExpenses, getTopMerchants } from '@/lib/analysis/aggregator';
 import { computeGamificationReport } from '@/lib/analysis/gamification';
 import { v4 as uuidv4 } from 'uuid';
-import { saveReport, saveTransactions } from '@/lib/db/dexie';
+import { saveReport, saveTransactions } from '@/lib/db/api-client';
 
 export type AnalysisStep =
   | 'idle'

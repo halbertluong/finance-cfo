@@ -3,11 +3,11 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import {
   loadTransactions, loadBudgets, loadGoals, loadAccounts,
-  loadAccountBalances, loadRecurring, loadLatestReport,
-  updateTransactionCategory, saveBudget, deleteBudget as dbDeleteBudget,
-  saveGoal, deleteGoal as dbDeleteGoal, saveAccount, deleteAccount as dbDeleteAccount,
-  saveAccountBalance, saveRecurring, deleteRecurring as dbDeleteRecurring,
-} from '@/lib/db/dexie';
+  loadLatestBalances as loadAccountBalances, loadRecurring, loadLatestReport,
+  updateTransactionCategory, saveBudget, removeBudget as dbDeleteBudget,
+  saveGoal, removeGoal as dbDeleteGoal, saveAccount, removeAccount as dbDeleteAccount,
+  saveAccountBalance, saveRecurring, removeRecurring as dbDeleteRecurring,
+} from '@/lib/db/api-client';
 import {
   Transaction, Budget, Goal, Account, AccountBalance,
   RecurringTransaction, AnalysisReport,

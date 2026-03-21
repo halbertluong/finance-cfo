@@ -14,7 +14,7 @@ import { CFOScoreSlide } from '@/components/slides/slides/CFOScoreSlide';
 import { AchievementsSlide } from '@/components/slides/slides/AchievementsSlide';
 import { SignOffSlide } from '@/components/slides/slides/SignOffSlide';
 import { AnalysisReport } from '@/models/types';
-import { loadLatestReport } from '@/lib/db/dexie';
+import { loadLatestReport } from '@/lib/db/api-client';
 
 export default function PresentationPage() {
   const router = useRouter();

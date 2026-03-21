@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { UserButton } from '@clerk/nextjs';
 import {
   LayoutDashboard, ArrowLeftRight, PiggyBank, TrendingUp,
   Target, RefreshCw, Upload, Presentation, ChevronRight, Download,
 } from 'lucide-react';
-import { loadTransactions } from '@/lib/db/dexie';
 
 const NAV_ITEMS = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -18,10 +18,15 @@ const NAV_ITEMS = [
 ];
 
 async function exportTransactionsCSV() {
-  const transactions = await loadTransactions();
+  const res = await fetch('/api/data/transactions');
+  if (!res.ok) return;
+  const transactions = await res.json();
   if (transactions.length === 0) return;
   const headers = ['date', 'description', 'merchant', 'amount', 'type', 'category', 'account', 'tags'];
-  const rows = transactions.map((t) => [
+  const rows = transactions.map((t: {
+    date: number; description: string; normalizedMerchant: string;
+    amount: number; type: string; categoryId: string; accountId: string; tags: string[];
+  }) => [
     new Date(t.date).toISOString().split('T')[0],
     `"${t.description.replace(/"/g, '""')}"`,
     `"${t.normalizedMerchant.replace(/"/g, '""')}"`,
@@ -31,7 +36,7 @@ async function exportTransactionsCSV() {
     t.accountId,
     `"${t.tags.join(', ')}"`,
   ]);
-  const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+  const csv = [headers.join(','), ...rows.map((r: unknown[]) => r.join(','))].join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -101,6 +106,18 @@ export function AppSidebar() {
           <span className="flex-1">CFO Report</span>
           <ChevronRight className="w-3 h-3" />
         </Link>
+
+        {/* User account */}
+        <div className="flex items-center gap-3 px-3 py-2">
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: 'w-6 h-6',
+              },
+            }}
+          />
+          <span className="text-xs text-white/30">Account</span>
+        </div>
       </div>
     </aside>
   );

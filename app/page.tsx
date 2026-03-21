@@ -22,7 +22,7 @@ export default function Home() {
   const { progress, report, error, runAnalysis } = useAnalysis();
 
   useEffect(() => {
-    import('@/lib/db/dexie').then(({ hasAnyData }) =>
+    import('@/lib/db/api-client').then(({ hasAnyData }) =>
       hasAnyData().then((has) => { if (has) router.push('/dashboard'); })
     );
   // eslint-disable-next-line react-hooks/exhaustive-deps
