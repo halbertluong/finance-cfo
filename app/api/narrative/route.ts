@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { requireUserId } from '@/lib/auth';
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { buildNarrativePrompt, buildHabitDetectionPrompt, ANALYSIS_SYSTEM_PROMPT } from '@/lib/ai/prompts';
@@ -53,8 +53,7 @@ Habits to Watch: ${(report.gamification?.badHabits ?? []).map((h) => h.title).jo
 }
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try { await requireUserId(); } catch { return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); }
   try {
     const { report, type } = await req.json();
 

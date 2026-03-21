@@ -1,11 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
-import { UserButton } from '@clerk/nextjs';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase/client';
 import {
   LayoutDashboard, ArrowLeftRight, PiggyBank, TrendingUp,
-  Target, RefreshCw, Upload, Presentation, ChevronRight, Download,
+  Target, RefreshCw, Upload, Presentation, ChevronRight, Download, LogOut,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -24,7 +26,7 @@ async function exportTransactionsCSV() {
   if (transactions.length === 0) return;
   const headers = ['date', 'description', 'merchant', 'amount', 'type', 'category', 'account', 'tags'];
   const rows = transactions.map((t: {
-    date: number; description: string; normalizedMerchant: string;
+    date: string; description: string; normalizedMerchant: string;
     amount: number; type: string; categoryId: string; accountId: string; tags: string[];
   }) => [
     new Date(t.date).toISOString().split('T')[0],
@@ -48,6 +50,13 @@ async function exportTransactionsCSV() {
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/sign-in');
+  };
 
   return (
     <aside className="w-56 flex-shrink-0 bg-[#0d0d15] border-r border-white/5 flex flex-col h-full">
@@ -106,18 +115,13 @@ export function AppSidebar() {
           <span className="flex-1">CFO Report</span>
           <ChevronRight className="w-3 h-3" />
         </Link>
-
-        {/* User account */}
-        <div className="flex items-center gap-3 px-3 py-2">
-          <UserButton
-            appearance={{
-              elements: {
-                avatarBox: 'w-6 h-6',
-              },
-            }}
-          />
-          <span className="text-xs text-white/30">Account</span>
-        </div>
+        <button
+          onClick={handleSignOut}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-white/30 hover:text-white/60 hover:bg-white/5 transition-all"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign Out
+        </button>
       </div>
     </aside>
   );
