@@ -13,11 +13,12 @@ export async function POST(req: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30, // 30 days
+      maxAge: 60 * 60 * 24 * 30,
       path: '/',
     });
     return res;
-  } catch {
-    return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+  } catch (e) {
+    console.error('Session error:', String(e));
+    return NextResponse.json({ error: String(e) }, { status: 401 });
   }
 }
