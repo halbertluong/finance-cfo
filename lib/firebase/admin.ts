@@ -11,9 +11,8 @@ function getAdminApp(): App {
       const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
       if (!privateKey) throw new Error('FIREBASE_ADMIN_PRIVATE_KEY is not set');
 
-      // Vercel stores the value without outer quotes but with literal \n
-      // Strip surrounding quotes if present, then convert \n to real newlines
-      const cleaned = privateKey.replace(/^"|"$/g, '').replace(/\\n/g, '\n');
+      // Stored as base64 to avoid newline formatting issues across environments
+      const cleaned = Buffer.from(privateKey, 'base64').toString('utf8');
 
       app = initializeApp({
         credential: cert({
