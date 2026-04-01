@@ -7,13 +7,21 @@ import { CSVDropzone } from '@/components/upload/CSVDropzone';
 import { ColumnMapper } from '@/components/upload/ColumnMapper';
 import { useAnalysis } from '@/hooks/useAnalysis';
 import { ParsedCSV, ColumnMapping } from '@/models/types';
-import { TrendingUp, Sparkles, BarChart3, Trophy, ArrowRight } from 'lucide-react';
+import { TrendingUp, Sparkles, BarChart3, Trophy, ArrowRight, LogOut } from 'lucide-react';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase/client';
 
 type Step = 'landing' | 'upload' | 'mapping' | 'options' | 'processing';
 
 export default function Home() {
   const router = useRouter();
   const [step, setStep] = useState<Step>('landing');
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/sign-in');
+  };
   const [csv, setCsv] = useState<ParsedCSV | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping | null>(null);
   const [familyName, setFamilyName] = useState('');
@@ -56,6 +64,17 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#0a0a0f] text-white">
+      {/* Sign Out */}
+      <div className="fixed top-4 right-4 z-20">
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-white/50 hover:text-red-400 hover:bg-red-500/10 transition-all"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign Out
+        </button>
+      </div>
+
       {/* Ambient */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/3 w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-3xl" />
