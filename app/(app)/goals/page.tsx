@@ -13,7 +13,7 @@ import { differenceInMonths, format } from 'date-fns';
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
 
-const GOAL_COLORS = ['#8b5cf6', '#10b981', '#3b82f6', '#f59e0b', '#ec4899', '#14b8a6'];
+const GOAL_COLORS = ['#16a34a', '#2563eb', '#9333ea', '#f59e0b', '#ec4899', '#0891b2'];
 const GOAL_ICONS = ['🏠', '🚗', '✈️', '📚', '💍', '🏖️', '🎓', '💰', '🏋️', '🐶', '👶', '🔧', '🎸', '🌱', '💊', '🎯'];
 
 function ProgressRing({ percent, color, size = 80 }: { percent: number; color: string; size?: number }) {
@@ -22,7 +22,7 @@ function ProgressRing({ percent, color, size = 80 }: { percent: number; color: s
   const offset = circumference * (1 - Math.min(percent / 100, 1));
   return (
     <svg width={size} height={size} className="-rotate-90">
-      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={8} />
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#f3f4f6" strokeWidth={8} />
       <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth={8}
         strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset}
         style={{ transition: 'stroke-dashoffset 1s ease' }} />
@@ -54,61 +54,59 @@ function GoalModal({ goal, onSave, onClose }: { goal?: Goal; onSave: (g: Goal) =
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-3">
-        <div className="flex-1">
-          <label className="block text-xs text-white/60 mb-1.5 uppercase tracking-wider">Goal Name</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Emergency Fund"
-            className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-violet-400" />
-        </div>
+      <div>
+        <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Goal Name</label>
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Emergency Fund"
+          className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs text-white/60 mb-1.5 uppercase tracking-wider">Target Amount</label>
+          <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Target Amount</label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
             <input type="number" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="0"
-              className="w-full bg-white/10 border border-white/20 rounded-xl pl-7 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-violet-400" />
+              className="w-full bg-white border border-gray-300 rounded-xl pl-7 pr-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" />
           </div>
         </div>
         <div>
-          <label className="block text-xs text-white/60 mb-1.5 uppercase tracking-wider">Current Amount</label>
+          <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Current Amount</label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
             <input type="number" value={current} onChange={(e) => setCurrent(e.target.value)} placeholder="0"
-              className="w-full bg-white/10 border border-white/20 rounded-xl pl-7 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-violet-400" />
+              className="w-full bg-white border border-gray-300 rounded-xl pl-7 pr-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" />
           </div>
         </div>
       </div>
       <div>
-        <label className="block text-xs text-white/60 mb-1.5 uppercase tracking-wider">Target Date (optional)</label>
+        <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Target Date (optional)</label>
         <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)}
-          className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-violet-400" />
+          className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" />
       </div>
       <div>
-        <label className="block text-xs text-white/60 mb-1.5 uppercase tracking-wider">Color</label>
+        <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Color</label>
         <div className="flex gap-2">
           {GOAL_COLORS.map((c) => (
             <button key={c} onClick={() => setColor(c)}
               className="w-7 h-7 rounded-full border-2 transition-all"
-              style={{ background: c, borderColor: c === color ? 'white' : 'transparent' }} />
+              style={{ background: c, borderColor: c === color ? '#1f2937' : 'transparent' }} />
           ))}
         </div>
       </div>
       <div>
-        <label className="block text-xs text-white/60 mb-1.5 uppercase tracking-wider">Icon</label>
+        <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Icon</label>
         <div className="flex flex-wrap gap-1.5">
           {GOAL_ICONS.map((em) => (
             <button key={em} onClick={() => setIcon(em)}
-              className={`w-9 h-9 rounded-lg text-lg flex items-center justify-center transition-colors ${em === icon ? 'bg-violet-500/30 ring-1 ring-violet-500' : 'bg-white/5 hover:bg-white/10'}`}>
+              className={`w-9 h-9 rounded-lg text-lg flex items-center justify-center transition-colors ${em === icon ? 'bg-green-100 ring-1 ring-green-500' : 'bg-gray-100 hover:bg-gray-200'}`}>
               {em}
             </button>
           ))}
         </div>
       </div>
       <div className="flex gap-3 pt-2">
-        <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-white/20 text-white/60 text-sm hover:bg-white/5 transition-colors">Cancel</button>
+        <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm hover:bg-gray-50 transition-colors">Cancel</button>
         <button onClick={handleSave} disabled={!name || !target}
-          className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold disabled:opacity-40 transition-colors">
+          className="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold disabled:opacity-40 transition-colors">
           {goal ? 'Update' : 'Create'} Goal
         </button>
       </div>
@@ -135,24 +133,28 @@ export default function GoalsPage() {
     setUpdateVal('');
   };
 
-  if (isLoading) return <div className="flex items-center justify-center h-full"><div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" /></div>;
+  if (isLoading) return (
+    <div className="flex items-center justify-center h-full">
+      <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
 
   return (
-    <div className="p-6 text-white">
+    <div className="p-4 sm:p-6 text-gray-900">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Goals</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Goals</h1>
         <button onClick={() => { setEditing(undefined); setModalOpen(true); }}
-          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
           <Plus className="w-4 h-4" /> New Goal
         </button>
       </div>
 
       {goals.length === 0 ? (
         <EmptyState icon="🎯" title="No goals yet" description="Set savings goals to stay motivated and track your progress."
-          action={<button onClick={() => setModalOpen(true)} className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-sm font-semibold transition-colors">Create First Goal</button>} />
+          action={<button onClick={() => setModalOpen(true)} className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold transition-colors">Create First Goal</button>} />
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeGoals.map((goal, i) => {
               const percent = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0;
               const monthsLeft = goal.deadline ? differenceInMonths(new Date(goal.deadline), new Date()) : null;
@@ -160,9 +162,9 @@ export default function GoalsPage() {
 
               return (
                 <motion.div key={goal.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
-                  className={`bg-white/5 border rounded-2xl p-5 relative overflow-hidden ${completed ? 'border-emerald-500/50' : 'border-white/10'}`}>
+                  className={`bg-white border rounded-2xl p-5 shadow-sm relative overflow-hidden ${completed ? 'border-green-300' : 'border-gray-100'}`}>
                   {completed && (
-                    <div className="absolute top-0 right-0 bg-emerald-500/20 text-emerald-400 text-xs px-2 py-1 rounded-bl-xl">
+                    <div className="absolute top-0 right-0 bg-green-100 text-green-700 text-xs px-2 py-1 rounded-bl-xl font-medium">
                       ✓ Achieved!
                     </div>
                   )}
@@ -173,22 +175,22 @@ export default function GoalsPage() {
                         <span className="absolute inset-0 flex items-center justify-center text-lg">{goal.icon}</span>
                       </div>
                       <div>
-                        <p className="font-semibold text-white">{goal.name}</p>
-                        <p className="text-xs text-white/40">{percent.toFixed(0)}% funded</p>
+                        <p className="font-semibold text-gray-900">{goal.name}</p>
+                        <p className="text-xs text-gray-400">{percent.toFixed(0)}% funded</p>
                       </div>
                     </div>
                     <div className="flex gap-1">
-                      <button onClick={() => { setEditing(goal); setModalOpen(true); }} className="w-6 h-6 flex items-center justify-center text-white/30 hover:text-white/70 rounded transition-colors"><Pencil className="w-3 h-3" /></button>
-                      <button onClick={() => removeGoal(goal.id)} className="w-6 h-6 flex items-center justify-center text-white/30 hover:text-red-400 rounded transition-colors"><Trash2 className="w-3 h-3" /></button>
+                      <button onClick={() => { setEditing(goal); setModalOpen(true); }} className="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-gray-600 rounded transition-colors"><Pencil className="w-3 h-3" /></button>
+                      <button onClick={() => removeGoal(goal.id)} className="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-red-500 rounded transition-colors"><Trash2 className="w-3 h-3" /></button>
                     </div>
                   </div>
 
                   <div className="space-y-1">
                     <div className="flex justify-between text-sm">
                       <span style={{ color: goal.color }} className="font-bold">{fmt(goal.currentAmount)}</span>
-                      <span className="text-white/40">of {fmt(goal.targetAmount)}</span>
+                      <span className="text-gray-400">of {fmt(goal.targetAmount)}</span>
                     </div>
-                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                       <motion.div className="h-full rounded-full" style={{ background: goal.color }}
                         initial={{ width: 0 }} animate={{ width: `${Math.min(percent, 100)}%` }}
                         transition={{ duration: 0.8, delay: i * 0.07 }} />
@@ -196,7 +198,7 @@ export default function GoalsPage() {
                   </div>
 
                   {monthsLeft !== null && (
-                    <p className="text-xs text-white/30 mt-2">
+                    <p className="text-xs text-gray-400 mt-2">
                       {monthsLeft <= 0 ? '⚠️ Past deadline' : `${monthsLeft} month${monthsLeft !== 1 ? 's' : ''} to go`}
                       {goal.deadline && ` · ${format(new Date(goal.deadline), 'MMM yyyy')}`}
                     </p>
@@ -204,15 +206,15 @@ export default function GoalsPage() {
 
                   {updatingId === goal.id ? (
                     <div className="flex items-center gap-2 mt-3">
-                      <span className="text-white/40 text-sm">$</span>
+                      <span className="text-gray-400 text-sm">$</span>
                       <input autoFocus type="number" value={updateVal} onChange={(e) => setUpdateVal(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') handleUpdateProgress(goal); if (e.key === 'Escape') setUpdatingId(null); }}
-                        className="flex-1 bg-white/10 border border-violet-400 rounded-lg px-2 py-1 text-sm text-white focus:outline-none" />
-                      <button onClick={() => handleUpdateProgress(goal)} className="text-emerald-400"><Check className="w-4 h-4" /></button>
+                        className="flex-1 bg-white border border-green-400 rounded-lg px-2 py-1 text-sm text-gray-900 focus:outline-none" />
+                      <button onClick={() => handleUpdateProgress(goal)} className="text-green-600"><Check className="w-4 h-4" /></button>
                     </div>
                   ) : (
                     <button onClick={() => { setUpdatingId(goal.id); setUpdateVal(String(goal.currentAmount)); }}
-                      className="w-full mt-3 py-1.5 rounded-lg border border-white/15 text-xs text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors">
+                      className="w-full mt-3 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors">
                       Update Progress
                     </button>
                   )}
@@ -223,16 +225,16 @@ export default function GoalsPage() {
 
           {completedGoals.length > 0 && (
             <div>
-              <p className="text-xs text-white/30 uppercase tracking-wider mb-3">Completed Goals</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-3 font-semibold">Completed Goals</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {completedGoals.map((goal) => (
-                  <div key={goal.id} className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 flex items-center gap-3 opacity-60">
+                  <div key={goal.id} className="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex items-center gap-3 opacity-60">
                     <span className="text-2xl">{goal.icon}</span>
                     <div className="flex-1">
-                      <p className="text-sm text-white">{goal.name}</p>
-                      <p className="text-xs text-white/30">{fmt(goal.targetAmount)} · {goal.completedAt ? format(new Date(goal.completedAt), 'MMM yyyy') : ''}</p>
+                      <p className="text-sm text-gray-800 font-medium">{goal.name}</p>
+                      <p className="text-xs text-gray-400">{fmt(goal.targetAmount)} · {goal.completedAt ? format(new Date(goal.completedAt), 'MMM yyyy') : ''}</p>
                     </div>
-                    <button onClick={() => removeGoal(goal.id)} className="text-white/20 hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => removeGoal(goal.id)} className="text-gray-300 hover:text-red-500 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 ))}
               </div>

@@ -1,13 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { usePathname } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client';
 import {
   LayoutDashboard, ArrowLeftRight, PiggyBank, TrendingUp,
-  Target, RefreshCw, Upload, Presentation, ChevronRight, Download, LogOut,
+  Target, RefreshCw, Upload, Presentation, ChevronRight,
+  Download, LogOut, Menu, X,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -32,10 +33,7 @@ async function exportTransactionsCSV() {
     new Date(t.date).toISOString().split('T')[0],
     `"${t.description.replace(/"/g, '""')}"`,
     `"${t.normalizedMerchant.replace(/"/g, '""')}"`,
-    t.amount,
-    t.type,
-    t.categoryId,
-    t.accountId,
+    t.amount, t.type, t.categoryId, t.accountId,
     `"${t.tags.join(', ')}"`,
   ]);
   const csv = [headers.join(','), ...rows.map((r: unknown[]) => r.join(','))].join('\n');
@@ -48,7 +46,7 @@ async function exportTransactionsCSV() {
   URL.revokeObjectURL(url);
 }
 
-export function AppSidebar() {
+function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -59,14 +57,14 @@ export function AppSidebar() {
   };
 
   return (
-    <aside className="w-56 flex-shrink-0 bg-[#0d0d15] border-r border-white/5 flex flex-col h-full">
+    <div className="flex flex-col h-full bg-[#1a5e2e]">
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-white/5">
+      <div className="px-5 py-5 border-b border-white/10">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-xs font-bold text-white">
+          <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center text-xs font-bold text-white">
             $
           </div>
-          <span className="font-bold text-white text-sm">Family CFO</span>
+          <span className="font-bold text-white text-sm tracking-tight">Family CFO</span>
         </div>
       </div>
 
@@ -78,13 +76,14 @@ export function AppSidebar() {
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-150 group ${
+              onClick={onNavClick}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 group ${
                 active
-                  ? 'bg-violet-500/20 text-violet-300'
-                  : 'text-white/50 hover:text-white/80 hover:bg-white/5'
+                  ? 'bg-white/15 text-white font-medium'
+                  : 'text-green-100/70 hover:text-white hover:bg-white/10'
               }`}
             >
-              <Icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-violet-400' : 'text-white/30 group-hover:text-white/50'}`} />
+              <Icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-white' : 'text-green-200/50 group-hover:text-white/80'}`} />
               {label}
             </Link>
           );
@@ -92,24 +91,26 @@ export function AppSidebar() {
       </nav>
 
       {/* Bottom actions */}
-      <div className="px-3 py-4 border-t border-white/5 space-y-1">
+      <div className="px-3 py-4 border-t border-white/10 space-y-1">
         <Link
           href="/"
-          className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-white/40 hover:text-white/70 hover:bg-white/5 transition-all"
+          onClick={onNavClick}
+          className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-green-100/60 hover:text-white hover:bg-white/10 transition-all"
         >
           <Upload className="w-4 h-4" />
           Import CSV
         </Link>
         <button
           onClick={exportTransactionsCSV}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-white/40 hover:text-white/70 hover:bg-white/5 transition-all"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-green-100/60 hover:text-white hover:bg-white/10 transition-all"
         >
           <Download className="w-4 h-4" />
           Export Data
         </button>
         <Link
           href="/presentation"
-          className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 transition-all"
+          onClick={onNavClick}
+          className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm bg-white/10 text-white hover:bg-white/20 transition-all"
         >
           <Presentation className="w-4 h-4" />
           <span className="flex-1">CFO Report</span>
@@ -117,12 +118,67 @@ export function AppSidebar() {
         </Link>
         <button
           onClick={handleSignOut}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-white/50 hover:text-red-400 hover:bg-red-500/10 transition-all"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-green-100/60 hover:text-red-300 hover:bg-red-500/10 transition-all"
         >
           <LogOut className="w-4 h-4" />
           Sign Out
         </button>
       </div>
-    </aside>
+    </div>
+  );
+}
+
+export function AppSidebar() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+  const currentLabel = NAV_ITEMS.find(
+    (n) => pathname === n.href || pathname.startsWith(n.href + '/')
+  )?.label ?? 'Family CFO';
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-56 flex-shrink-0 flex-col h-full">
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile top bar */}
+      <div className="md:hidden fixed top-0 inset-x-0 z-30 h-14 bg-[#1a5e2e] flex items-center justify-between px-4 shadow-md">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center text-xs font-bold text-white">
+            $
+          </div>
+          <span className="font-bold text-white text-sm">{currentLabel}</span>
+        </div>
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          aria-label="Open menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Mobile drawer overlay */}
+      {mobileOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
+          <div className="fixed inset-y-0 left-0 z-50 w-64 md:hidden shadow-2xl">
+            <div className="absolute top-3 right-3 z-10">
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <SidebarContent onNavClick={() => setMobileOpen(false)} />
+          </div>
+        </>
+      )}
+    </>
   );
 }

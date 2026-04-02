@@ -39,43 +39,43 @@ function AddRecurringModal({ onSave, onClose }: { onSave: (r: RecurringTransacti
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-xs text-white/60 mb-1.5 uppercase tracking-wider">Merchant / Bill Name</label>
+        <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Merchant / Bill Name</label>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Netflix"
-          className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-violet-400" />
+          className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs text-white/60 mb-1.5 uppercase tracking-wider">Amount</label>
+          <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Amount</label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
             <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0"
-              className="w-full bg-white/10 border border-white/20 rounded-xl pl-7 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-violet-400" />
+              className="w-full bg-white border border-gray-300 rounded-xl pl-7 pr-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" />
           </div>
         </div>
         <div>
-          <label className="block text-xs text-white/60 mb-1.5 uppercase tracking-wider">Frequency</label>
+          <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Frequency</label>
           <select value={frequency} onChange={(e) => setFrequency(e.target.value as RecurringTransaction['frequency'])}
-            className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-violet-400">
+            className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500">
             {Object.entries(FREQ_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
         </div>
       </div>
       <div>
-        <label className="block text-xs text-white/60 mb-1.5 uppercase tracking-wider">Category</label>
+        <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Category</label>
         <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
-          className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-violet-400">
+          className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500">
           {CATEGORIES.filter((c) => c.type !== 'income' && c.type !== 'transfer').map((c) => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
         </select>
       </div>
       <div>
-        <label className="block text-xs text-white/60 mb-1.5 uppercase tracking-wider">Next Due Date (optional)</label>
+        <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Next Due Date (optional)</label>
         <input type="date" value={nextDue} onChange={(e) => setNextDue(e.target.value)}
-          className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-violet-400" />
+          className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" />
       </div>
       <div className="flex gap-3 pt-2">
-        <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-white/20 text-white/60 text-sm hover:bg-white/5 transition-colors">Cancel</button>
+        <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm hover:bg-gray-50 transition-colors">Cancel</button>
         <button onClick={handleSave} disabled={!name || !amount}
-          className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold disabled:opacity-40 transition-colors">
+          className="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold disabled:opacity-40 transition-colors">
           Add Bill
         </button>
       </div>
@@ -106,40 +106,44 @@ export default function RecurringPage() {
     return differenceInDays(new Date(r.nextDueDate), new Date());
   };
 
-  if (isLoading) return <div className="flex items-center justify-center h-full"><div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" /></div>;
+  if (isLoading) return (
+    <div className="flex items-center justify-center h-full">
+      <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
 
   return (
-    <div className="p-6 text-white">
+    <div className="p-4 sm:p-6 text-gray-900">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Recurring & Bills</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Recurring & Bills</h1>
           {active.length > 0 && (
-            <p className="text-white/40 text-sm mt-0.5">~{fmt(totalMonthly)}/month across {active.length} active bills</p>
+            <p className="text-gray-400 text-sm mt-0.5">~{fmt(totalMonthly)}/month across {active.length} active bills</p>
           )}
         </div>
         <button onClick={() => setModalOpen(true)}
-          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
           <Plus className="w-4 h-4" /> Add Bill
         </button>
       </div>
 
       {/* Suggestions */}
       {suggestions.length > 0 && (
-        <div className="mb-6 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-5">
+        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-3">
-            <RefreshCw className="w-4 h-4 text-amber-400" />
-            <h2 className="text-sm font-semibold text-amber-400">Detected Recurring ({suggestions.length})</h2>
+            <RefreshCw className="w-4 h-4 text-amber-600" />
+            <h2 className="text-sm font-semibold text-amber-700">Detected Recurring ({suggestions.length})</h2>
           </div>
           <div className="space-y-2">
             {suggestions.map((s) => (
-              <div key={s.id} className="flex items-center gap-3 bg-white/5 rounded-xl px-4 py-3">
+              <div key={s.id} className="flex items-center gap-3 bg-white border border-amber-100 rounded-xl px-4 py-3">
                 <span>{getCategoryIcon(s.categoryId)}</span>
                 <div className="flex-1">
-                  <p className="text-sm text-white font-medium">{s.normalizedMerchant}</p>
-                  <p className="text-xs text-white/40">{FREQ_LABELS[s.frequency]} · ~{fmt(s.amount)}</p>
+                  <p className="text-sm text-gray-800 font-medium">{s.normalizedMerchant}</p>
+                  <p className="text-xs text-gray-400">{FREQ_LABELS[s.frequency]} · ~{fmt(s.amount)}</p>
                 </div>
                 <button onClick={() => upsertRecurring(s)}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 rounded-lg text-xs transition-colors">
+                  className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg text-xs transition-colors font-medium">
                   <Check className="w-3 h-3" /> Confirm
                 </button>
               </div>
@@ -151,79 +155,111 @@ export default function RecurringPage() {
       {/* Active bills */}
       {active.length === 0 && suggestions.length === 0 ? (
         <EmptyState icon="🔄" title="No recurring bills tracked" description="Add your subscriptions and bills to track upcoming due dates and monthly costs."
-          action={<button onClick={() => setModalOpen(true)} className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-sm font-semibold transition-colors">Add First Bill</button>} />
+          action={<button onClick={() => setModalOpen(true)} className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold transition-colors">Add First Bill</button>} />
       ) : (
-        <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-          <div className="px-5 py-3 border-b border-white/10">
-            <h2 className="text-sm font-semibold">Active Bills & Subscriptions</h2>
-          </div>
-          {active.length === 0 ? (
-            <p className="text-white/30 text-sm text-center py-8">No active bills. Add one above.</p>
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-white/5">
-                  <th className="text-left px-5 py-2.5 text-xs text-white/40 font-medium uppercase tracking-wider">Bill</th>
-                  <th className="text-left px-5 py-2.5 text-xs text-white/40 font-medium uppercase tracking-wider">Frequency</th>
-                  <th className="text-right px-5 py-2.5 text-xs text-white/40 font-medium uppercase tracking-wider">Amount</th>
-                  <th className="text-right px-5 py-2.5 text-xs text-white/40 font-medium uppercase tracking-wider">Next Due</th>
-                  <th className="w-20" />
-                </tr>
-              </thead>
-              <tbody>
-                {active.map((r) => {
-                  const daysAway = getDaysStatus(r);
-                  return (
-                    <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
-                      <td className="px-5 py-3">
-                        <div className="flex items-center gap-2.5">
-                          <span>{getCategoryIcon(r.categoryId)}</span>
-                          <div>
-                            <p className="text-white/90">{r.normalizedMerchant}</p>
-                            <p className="text-xs text-white/30">{getCategoryName(r.categoryId)}</p>
+        <>
+          {/* Desktop table */}
+          <div className="hidden sm:block bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+            <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
+              <h2 className="text-sm font-semibold text-gray-700">Active Bills & Subscriptions</h2>
+            </div>
+            {active.length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-8">No active bills. Add one above.</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left px-5 py-2.5 text-xs text-gray-400 font-semibold uppercase tracking-wider">Bill</th>
+                    <th className="text-left px-5 py-2.5 text-xs text-gray-400 font-semibold uppercase tracking-wider">Frequency</th>
+                    <th className="text-right px-5 py-2.5 text-xs text-gray-400 font-semibold uppercase tracking-wider">Amount</th>
+                    <th className="text-right px-5 py-2.5 text-xs text-gray-400 font-semibold uppercase tracking-wider">Next Due</th>
+                    <th className="w-20" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {active.map((r) => {
+                    const daysAway = getDaysStatus(r);
+                    return (
+                      <tr key={r.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <span>{getCategoryIcon(r.categoryId)}</span>
+                            <div>
+                              <p className="text-gray-800 font-medium">{r.normalizedMerchant}</p>
+                              <p className="text-xs text-gray-400">{getCategoryName(r.categoryId)}</p>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3 text-white/50">{FREQ_LABELS[r.frequency]}</td>
-                      <td className="px-5 py-3 text-right font-semibold tabular-nums">{fmt(r.amount)}</td>
-                      <td className="px-5 py-3 text-right">
-                        {daysAway !== null ? (
-                          <span className={`text-xs font-medium ${daysAway < 0 ? 'text-red-400' : daysAway <= 3 ? 'text-amber-400' : 'text-white/50'}`}>
-                            {daysAway < 0 ? `${Math.abs(daysAway)}d overdue` : daysAway === 0 ? 'Today' : `in ${daysAway}d`}
-                          </span>
-                        ) : <span className="text-white/20 text-xs">—</span>}
-                      </td>
-                      <td className="px-5 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => upsertRecurring({ ...r, active: false })}
-                            className="w-7 h-7 flex items-center justify-center text-white/30 hover:text-amber-400 rounded-lg transition-colors" title="Deactivate">
-                            <Power className="w-3.5 h-3.5" />
-                          </button>
-                          <button onClick={() => removeRecurring(r.id)}
-                            className="w-7 h-7 flex items-center justify-center text-white/30 hover:text-red-400 rounded-lg transition-colors">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
+                        </td>
+                        <td className="px-5 py-3 text-gray-500">{FREQ_LABELS[r.frequency]}</td>
+                        <td className="px-5 py-3 text-right font-semibold text-gray-800 tabular-nums">{fmt(r.amount)}</td>
+                        <td className="px-5 py-3 text-right">
+                          {daysAway !== null ? (
+                            <span className={`text-xs font-medium ${daysAway < 0 ? 'text-red-500' : daysAway <= 3 ? 'text-amber-600' : 'text-gray-400'}`}>
+                              {daysAway < 0 ? `${Math.abs(daysAway)}d overdue` : daysAway === 0 ? 'Today' : `in ${daysAway}d`}
+                            </span>
+                          ) : <span className="text-gray-300 text-xs">—</span>}
+                        </td>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center justify-end gap-1">
+                            <button onClick={() => upsertRecurring({ ...r, active: false })}
+                              className="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-amber-500 rounded-lg transition-colors" title="Deactivate">
+                              <Power className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => removeRecurring(r.id)}
+                              className="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Mobile card list */}
+          <div className="sm:hidden space-y-2">
+            {active.map((r) => {
+              const daysAway = getDaysStatus(r);
+              return (
+                <div key={r.id} className="bg-white border border-gray-100 rounded-xl px-4 py-3 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">{getCategoryIcon(r.categoryId)}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate">{r.normalizedMerchant}</p>
+                      <p className="text-xs text-gray-400">{FREQ_LABELS[r.frequency]}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-gray-800">{fmt(r.amount)}</p>
+                      {daysAway !== null && (
+                        <p className={`text-xs ${daysAway < 0 ? 'text-red-500' : daysAway <= 3 ? 'text-amber-600' : 'text-gray-400'}`}>
+                          {daysAway < 0 ? `${Math.abs(daysAway)}d overdue` : daysAway === 0 ? 'Today' : `in ${daysAway}d`}
+                        </p>
+                      )}
+                    </div>
+                    <button onClick={() => removeRecurring(r.id)} className="text-gray-300 hover:text-red-500 transition-colors ml-1">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {inactive.length > 0 && (
         <div className="mt-4">
-          <p className="text-xs text-white/30 uppercase tracking-wider mb-2">Inactive</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wider mb-2 font-semibold">Inactive</p>
           <div className="space-y-1">
             {inactive.map((r) => (
-              <div key={r.id} className="flex items-center gap-3 bg-white/[0.03] border border-white/5 rounded-xl px-4 py-2.5 opacity-50">
+              <div key={r.id} className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl px-4 py-2.5 opacity-50">
                 <span className="text-sm">{getCategoryIcon(r.categoryId)}</span>
-                <span className="text-sm text-white/60 flex-1">{r.normalizedMerchant}</span>
-                <span className="text-xs text-white/30">{fmt(r.amount)}</span>
-                <button onClick={() => upsertRecurring({ ...r, active: true })} className="text-xs text-violet-400 hover:text-violet-300">Reactivate</button>
+                <span className="text-sm text-gray-600 flex-1">{r.normalizedMerchant}</span>
+                <span className="text-xs text-gray-400">{fmt(r.amount)}</span>
+                <button onClick={() => upsertRecurring({ ...r, active: true })} className="text-xs text-green-600 hover:text-green-700 font-medium">Reactivate</button>
               </div>
             ))}
           </div>

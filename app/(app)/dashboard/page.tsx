@@ -20,6 +20,15 @@ import { format } from 'date-fns';
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
 
+const TOOLTIP_STYLE = {
+  background: '#fff',
+  border: '1px solid #e5e7eb',
+  borderRadius: '8px',
+  color: '#1f2937',
+  fontSize: '12px',
+  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const { transactions, budgets, accounts, accountBalances, recurringItems, latestReport, isLoading } = useAppData();
@@ -44,7 +53,6 @@ export default function DashboardPage() {
 
   const savingsRate = income > 0 ? ((income - expenses) / income) * 100 : 0;
 
-  // Net worth from latest balances
   const latestBalances = useMemo(() => {
     const map: Record<string, number> = {};
     for (const b of accountBalances) {
@@ -64,7 +72,6 @@ export default function DashboardPage() {
     return nw;
   }, [accounts, latestBalances]);
 
-  // Spending by category for donut
   const categoryData = useMemo(() => {
     const map: Record<string, number> = {};
     for (const t of monthTransactions) {
@@ -77,10 +84,8 @@ export default function DashboardPage() {
       .sort((a, b) => b.value - a.value).slice(0, 8);
   }, [monthTransactions]);
 
-  // Monthly cashflow (last 6 months)
   const monthlyData = useMemo(() => getMonthlySpendingData(transactions).slice(-6), [transactions]);
 
-  // Budget statuses
   const budgetStatuses = useMemo(() => {
     const monthBudgets = budgets.filter((b) => b.monthKey === selectedMonth);
     return monthBudgets
@@ -89,14 +94,12 @@ export default function DashboardPage() {
       .slice(0, 5);
   }, [budgets, transactions, selectedMonth]);
 
-  // Recent transactions
   const recent = useMemo(() =>
     [...monthTransactions]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 8),
     [monthTransactions]);
 
-  // Upcoming bills
   const upcoming = useMemo(() => {
     const now = new Date();
     return recurringItems
@@ -113,7 +116,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -126,7 +129,7 @@ export default function DashboardPage() {
           title="No data yet"
           description="Import a CSV to get started with your financial dashboard."
           action={
-            <Link href="/" className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-sm font-semibold transition-colors">
+            <Link href="/" className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold transition-colors">
               Import CSV
             </Link>
           }
@@ -136,51 +139,51 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 text-white">
+    <div className="p-4 sm:p-6 space-y-5 text-gray-900">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{latestReport?.familyName ?? 'My'} Dashboard</h1>
-          <p className="text-white/40 text-sm mt-0.5">{transactions.length} transactions loaded</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{latestReport?.familyName ?? 'My'} Dashboard</h1>
+          <p className="text-gray-400 text-sm mt-0.5">{transactions.length} transactions loaded</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <MonthPicker value={selectedMonth} onChange={setSelectedMonth} availableKeys={availableMonths} />
           <Link
             href="/presentation"
-            className="flex items-center gap-2 bg-violet-500/20 hover:bg-violet-500/30 border border-violet-500/30 text-violet-300 rounded-xl px-3 py-2 text-sm transition-all"
+            className="flex items-center gap-2 bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 rounded-xl px-3 py-2 text-sm transition-all whitespace-nowrap"
           >
             <PresentationIcon className="w-4 h-4" />
-            CFO Report
+            <span className="hidden sm:inline">CFO Report</span>
           </Link>
         </div>
       </div>
 
       {/* KPI Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Net Worth', value: fmt(netWorth), color: netWorth >= 0 ? 'text-emerald-400' : 'text-red-400', sub: accounts.length > 0 ? `${accounts.length} accounts` : 'No accounts linked' },
-          { label: 'Income', value: fmt(income), color: 'text-emerald-400', sub: selectedMonth },
-          { label: 'Expenses', value: fmt(expenses), color: 'text-white', sub: selectedMonth },
-          { label: 'Savings Rate', value: `${savingsRate.toFixed(1)}%`, color: savingsRate >= 20 ? 'text-emerald-400' : savingsRate >= 10 ? 'text-amber-400' : 'text-red-400', sub: 'of income' },
+          { label: 'Net Worth', value: fmt(netWorth), color: netWorth >= 0 ? 'text-green-600' : 'text-red-500', sub: accounts.length > 0 ? `${accounts.length} accounts` : 'No accounts linked' },
+          { label: 'Income', value: fmt(income), color: 'text-green-600', sub: selectedMonth },
+          { label: 'Expenses', value: fmt(expenses), color: 'text-gray-900', sub: selectedMonth },
+          { label: 'Savings Rate', value: `${savingsRate.toFixed(1)}%`, color: savingsRate >= 20 ? 'text-green-600' : savingsRate >= 10 ? 'text-amber-500' : 'text-red-500', sub: 'of income' },
         ].map((k) => (
-          <div key={k.label} className="bg-white/5 border border-white/10 rounded-2xl p-4">
-            <p className="text-xs text-white/40 uppercase tracking-wider mb-1">{k.label}</p>
-            <p className={`text-2xl font-bold ${k.color}`}>{k.value}</p>
-            <p className="text-xs text-white/30 mt-1">{k.sub}</p>
+          <div key={k.label} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+            <p className="text-xs text-gray-400 uppercase tracking-wider mb-1 font-medium">{k.label}</p>
+            <p className={`text-xl sm:text-2xl font-bold ${k.color}`}>{k.value}</p>
+            <p className="text-xs text-gray-400 mt-1">{k.sub}</p>
           </div>
         ))}
       </div>
 
       {/* Main grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
         {/* Spending donut */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-sm">Spending by Category</h2>
-            <Link href="/transactions" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">All <ArrowRight className="w-3 h-3" /></Link>
+            <h2 className="font-semibold text-sm text-gray-900">Spending by Category</h2>
+            <Link href="/transactions" className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1">All <ArrowRight className="w-3 h-3" /></Link>
           </div>
           {categoryData.length === 0 ? (
-            <p className="text-white/30 text-sm text-center py-8">No expense data this month</p>
+            <p className="text-gray-400 text-sm text-center py-8">No expense data this month</p>
           ) : (
             <div className="flex gap-4">
               <ResponsiveContainer width="50%" height={160}>
@@ -188,16 +191,15 @@ export default function DashboardPage() {
                   <Pie data={categoryData} innerRadius="55%" outerRadius="80%" dataKey="value" paddingAngle={2}>
                     {categoryData.map((e, i) => <Cell key={i} fill={e.color} stroke="transparent" />)}
                   </Pie>
-                  <Tooltip contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', fontSize: '12px' }}
-                    formatter={(v) => [fmt(Number(v)), '']} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [fmt(Number(v)), '']} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="flex-1 space-y-1.5 overflow-hidden">
                 {categoryData.slice(0, 6).map((c) => (
                   <div key={c.id} className="flex items-center gap-2 text-xs">
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: c.color }} />
-                    <span className="text-white/60 flex-1 truncate">{c.name}</span>
-                    <span className="text-white/80 font-medium tabular-nums">{fmt(c.value)}</span>
+                    <span className="text-gray-500 flex-1 truncate">{c.name}</span>
+                    <span className="text-gray-700 font-medium tabular-nums">{fmt(c.value)}</span>
                   </div>
                 ))}
               </div>
@@ -206,26 +208,26 @@ export default function DashboardPage() {
         </div>
 
         {/* Budget overview */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-sm">Budget Overview</h2>
-            <Link href="/budgets" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">Manage <ArrowRight className="w-3 h-3" /></Link>
+            <h2 className="font-semibold text-sm text-gray-900">Budget Overview</h2>
+            <Link href="/budgets" className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1">Manage <ArrowRight className="w-3 h-3" /></Link>
           </div>
           {budgetStatuses.length === 0 ? (
             <div className="text-center py-6">
-              <p className="text-white/30 text-sm">No budgets set for this month.</p>
-              <Link href="/budgets" className="text-violet-400 text-xs mt-2 inline-block hover:text-violet-300">Set budgets →</Link>
+              <p className="text-gray-400 text-sm">No budgets set for this month.</p>
+              <Link href="/budgets" className="text-green-600 text-xs mt-2 inline-block hover:text-green-700">Set budgets →</Link>
             </div>
           ) : (
             <div className="space-y-3">
               {budgetStatuses.map((bs) => (
                 <div key={bs.budget.id}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-white/60 flex items-center gap-1.5">
+                    <span className="text-xs text-gray-600 flex items-center gap-1.5">
                       <span>{getCategoryIcon(bs.budget.categoryId)}</span>
                       {getCategoryName(bs.budget.categoryId)}
                     </span>
-                    <span className={`text-xs font-medium tabular-nums ${bs.isOver ? 'text-red-400' : 'text-white/60'}`}>
+                    <span className={`text-xs font-medium tabular-nums ${bs.isOver ? 'text-red-500' : 'text-gray-500'}`}>
                       {fmt(bs.spent)} / {fmt(bs.budget.amount)}
                     </span>
                   </div>
@@ -237,39 +239,38 @@ export default function DashboardPage() {
         </div>
 
         {/* Monthly cashflow */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-          <h2 className="font-semibold text-sm mb-4">Monthly Cashflow</h2>
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
+          <h2 className="font-semibold text-sm text-gray-900 mb-4">Monthly Cashflow</h2>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={monthlyData} barGap={2}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
-              <XAxis dataKey="month" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', fontSize: '12px' }}
-                formatter={(v) => [fmt(Number(v)), '']} />
-              <Bar dataKey="income" name="Income" fill="#10b981" radius={[3, 3, 0, 0]} />
-              <Bar dataKey="expenses" name="Expenses" fill="#8b5cf6" radius={[3, 3, 0, 0]} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
+              <XAxis dataKey="month" tick={{ fill: 'rgba(0,0,0,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} tick={{ fill: 'rgba(0,0,0,0.4)', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [fmt(Number(v)), '']} />
+              <Bar dataKey="income" name="Income" fill="#16a34a" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="expenses" name="Expenses" fill="#ef4444" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         {/* Recent transactions */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-sm">Recent Transactions</h2>
-            <Link href="/transactions" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></Link>
+            <h2 className="font-semibold text-sm text-gray-900">Recent Transactions</h2>
+            <Link href="/transactions" className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></Link>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1">
             {recent.map((t) => (
               <div key={t.id} className="flex items-center gap-3 py-1.5">
-                <div className="w-6 h-6 rounded-lg flex items-center justify-center text-xs flex-shrink-0"
-                  style={{ background: getCategoryColor(t.categoryId) + '30' }}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs flex-shrink-0"
+                  style={{ background: getCategoryColor(t.categoryId) + '20' }}>
                   {getCategoryIcon(t.categoryId)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-white/80 truncate">{t.normalizedMerchant || t.description}</p>
-                  <p className="text-xs text-white/30">{format(new Date(t.date), 'MMM d')}</p>
+                  <p className="text-xs text-gray-800 truncate font-medium">{t.normalizedMerchant || t.description}</p>
+                  <p className="text-xs text-gray-400">{format(new Date(t.date), 'MMM d')}</p>
                 </div>
-                <span className={`text-sm font-semibold tabular-nums ${t.type === 'credit' ? 'text-emerald-400' : 'text-white'}`}>
+                <span className={`text-sm font-semibold tabular-nums ${t.type === 'credit' ? 'text-green-600' : 'text-gray-700'}`}>
                   {t.type === 'credit' ? '+' : '-'}{fmt(t.amount)}
                 </span>
               </div>
@@ -280,17 +281,17 @@ export default function DashboardPage() {
 
       {/* Upcoming bills */}
       {upcoming.length > 0 && (
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-sm">Upcoming Bills</h2>
-            <Link href="/recurring" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">Manage <ArrowRight className="w-3 h-3" /></Link>
+            <h2 className="font-semibold text-sm text-gray-900">Upcoming Bills</h2>
+            <Link href="/recurring" className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1">Manage <ArrowRight className="w-3 h-3" /></Link>
           </div>
-          <div className="flex gap-3 overflow-x-auto pb-1">
+          <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
             {upcoming.map((r) => (
-              <div key={r.id} className={`flex-shrink-0 bg-white/5 border rounded-xl p-3 w-36 ${r.daysAway <= 3 ? 'border-amber-500/40' : 'border-white/10'}`}>
-                <p className="text-xs font-medium text-white truncate">{r.normalizedMerchant}</p>
-                <p className="text-base font-bold text-white mt-1">{fmt(r.amount)}</p>
-                <p className={`text-xs mt-1 ${r.daysAway <= 3 ? 'text-amber-400' : r.daysAway < 0 ? 'text-red-400' : 'text-white/40'}`}>
+              <div key={r.id} className={`flex-shrink-0 bg-gray-50 border rounded-xl p-3 w-36 ${r.daysAway <= 3 ? 'border-amber-300 bg-amber-50' : 'border-gray-200'}`}>
+                <p className="text-xs font-medium text-gray-800 truncate">{r.normalizedMerchant}</p>
+                <p className="text-base font-bold text-gray-900 mt-1">{fmt(r.amount)}</p>
+                <p className={`text-xs mt-1 ${r.daysAway <= 3 ? 'text-amber-600' : r.daysAway < 0 ? 'text-red-500' : 'text-gray-400'}`}>
                   {r.daysAway < 0 ? `${Math.abs(r.daysAway)}d overdue` : r.daysAway === 0 ? 'Due today' : `in ${r.daysAway}d`}
                 </p>
               </div>
