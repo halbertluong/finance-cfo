@@ -31,8 +31,8 @@ export default function Home() {
 
   useEffect(() => {
     import('@/lib/db/api-client').then(({ hasAnyData }) =>
-      hasAnyData().then((has) => { if (has) router.push('/dashboard'); })
-    );
+      hasAnyData().then((has) => { if (has) router.push('/dashboard'); }).catch(() => {})
+    ).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
