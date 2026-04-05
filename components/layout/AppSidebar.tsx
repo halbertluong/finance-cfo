@@ -46,9 +46,10 @@ async function exportTransactionsCSV() {
   URL.revokeObjectURL(url);
 }
 
-function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
+export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut(auth);
@@ -56,8 +57,12 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
     router.push('/sign-in');
   };
 
-  return (
-    <div className="flex flex-col h-full bg-[#1a5e2e]">
+  const currentLabel =
+    NAV_ITEMS.find((n) => !!pathname && (pathname === n.href || pathname.startsWith(n.href + '/')))?.label ??
+    'Family CFO';
+
+  const navItems = (
+    <>
       {/* Logo */}
       <div className="px-5 py-5 border-b border-white/10">
         <div className="flex items-center gap-2.5">
@@ -71,12 +76,12 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
-          const active = pathname === href || pathname.startsWith(href + '/');
+          const active = !!pathname && (pathname === href || pathname.startsWith(href + '/'));
           return (
             <Link
               key={href}
               href={href}
-              onClick={onNavClick}
+              onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 group ${
                 active
                   ? 'bg-white/15 text-white font-medium'
@@ -94,7 +99,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
       <div className="px-3 py-4 border-t border-white/10 space-y-1">
         <Link
           href="/"
-          onClick={onNavClick}
+          onClick={() => setMobileOpen(false)}
           className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-green-100/60 hover:text-white hover:bg-white/10 transition-all"
         >
           <Upload className="w-4 h-4" />
@@ -109,7 +114,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
         </button>
         <Link
           href="/presentation"
-          onClick={onNavClick}
+          onClick={() => setMobileOpen(false)}
           className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm bg-white/10 text-white hover:bg-white/20 transition-all"
         >
           <Presentation className="w-4 h-4" />
@@ -124,22 +129,14 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
           Sign Out
         </button>
       </div>
-    </div>
+    </>
   );
-}
-
-export function AppSidebar() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const pathname = usePathname();
-  const currentLabel = NAV_ITEMS.find(
-    (n) => pathname === n.href || pathname.startsWith(n.href + '/')
-  )?.label ?? 'Family CFO';
 
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-56 flex-shrink-0 flex-col h-full">
-        <SidebarContent />
+      <aside className="hidden md:flex w-56 flex-shrink-0 flex-col h-full bg-[#1a5e2e]">
+        {navItems}
       </aside>
 
       {/* Mobile top bar */}
@@ -159,14 +156,14 @@ export function AppSidebar() {
         </button>
       </div>
 
-      {/* Mobile drawer overlay */}
+      {/* Mobile drawer */}
       {mobileOpen && (
         <>
           <div
             className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="fixed inset-y-0 left-0 z-50 w-64 md:hidden shadow-2xl">
+          <aside className="fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-[#1a5e2e] md:hidden shadow-2xl">
             <div className="absolute top-3 right-3 z-10">
               <button
                 onClick={() => setMobileOpen(false)}
@@ -175,8 +172,8 @@ export function AppSidebar() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <SidebarContent onNavClick={() => setMobileOpen(false)} />
-          </div>
+            {navItems}
+          </aside>
         </>
       )}
     </>
