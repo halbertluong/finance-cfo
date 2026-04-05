@@ -66,6 +66,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setAccountBalances(bals);
       setRecurringItems(recs);
       setLatestReport(report);
+    } catch (e) {
+      // Silently handle API errors (e.g. 401 Unauthorized) — middleware
+      // should redirect unauthenticated users before they reach this point.
+      console.error('AppDataContext: failed to load data:', e);
     } finally {
       setIsLoading(false);
     }
