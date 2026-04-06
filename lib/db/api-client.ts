@@ -32,7 +32,8 @@ export async function saveTransactions(txs: Transaction[]): Promise<void> {
 }
 
 export async function loadTransactions(): Promise<Transaction[]> {
-  return apiFetch<Transaction[]>('/api/data/transactions');
+  const txs = await apiFetch<Transaction[]>('/api/data/transactions');
+  return txs.map((t) => ({ ...t, date: new Date(t.date) }));
 }
 
 export async function updateTransactionCategory(
@@ -80,7 +81,8 @@ export async function saveAccountBalance(bal: AccountBalance): Promise<void> {
 }
 
 export async function loadLatestBalances(): Promise<AccountBalance[]> {
-  return apiFetch<AccountBalance[]>('/api/data/account-balances');
+  const bals = await apiFetch<AccountBalance[]>('/api/data/account-balances');
+  return bals.map((b) => ({ ...b, date: new Date(b.date) }));
 }
 
 // ─── Budgets ──────────────────────────────────────────────────────────────────
@@ -148,5 +150,13 @@ export async function saveReport(report: AnalysisReport): Promise<void> {
 }
 
 export async function loadLatestReport(): Promise<AnalysisReport | null> {
-  return apiFetch<AnalysisReport | null>('/api/data/reports');
+  const report = await apiFetch<AnalysisReport | null>('/api/data/reports');
+  if (!report) return null;
+  return {
+    ...report,
+    generatedAt: new Date(report.generatedAt),
+    periodStart: new Date(report.periodStart),
+    periodEnd: new Date(report.periodEnd),
+    transactions: report.transactions.map((t) => ({ ...t, date: new Date(t.date) })),
+  };
 }
