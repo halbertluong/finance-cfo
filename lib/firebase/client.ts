@@ -1,13 +1,22 @@
-import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getAuth, Auth, GoogleAuthProvider } from 'firebase/auth';
 
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-};
+let _app: FirebaseApp | undefined;
+let _auth: Auth | undefined;
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+try {
+  _app = getApps().length === 0
+    ? initializeApp({
+        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      })
+    : getApps()[0];
+  _auth = getAuth(_app);
+} catch (e) {
+  console.error('Firebase initialization failed:', e);
+}
 
-export const auth = getAuth(app);
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+export const auth = _auth!;
 export const googleProvider = new GoogleAuthProvider();
