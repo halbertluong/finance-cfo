@@ -7,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client';
 import {
   LayoutDashboard, ArrowLeftRight, PiggyBank, TrendingUp,
-  Target, RefreshCw, Upload, Presentation, ChevronRight,
+  Target, RefreshCw, Wand2, Upload, Presentation, ChevronRight,
   Download, LogOut, Menu, X,
 } from 'lucide-react';
 
@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { href: '/net-worth', icon: TrendingUp, label: 'Net Worth' },
   { href: '/goals', icon: Target, label: 'Goals' },
   { href: '/recurring', icon: RefreshCw, label: 'Recurring' },
+  { href: '/review', icon: Wand2, label: 'Smart Review' },
 ];
 
 async function exportTransactionsCSV() {

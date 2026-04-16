@@ -60,6 +60,68 @@ Write these 6 narrative sections. Return ONLY a JSON object with these exact key
 }`;
 }
 
+export interface MerchantReviewInput {
+  name: string;
+  samples: string[];
+  avgAmount: number;
+  count: number;
+  firstSeen: string;
+  lastSeen: string;
+  currentCategoryId: string;
+}
+
+export interface MerchantReviewResult {
+  name: string;
+  categoryId: string;
+  isRecurring: boolean;
+  merchantType: 'subscription' | 'utility_bill' | 'irregular_bill' | 'variable_spend';
+  suggestedFrequency?: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'annual' | null;
+  confidence: number;
+}
+
+export const MERCHANT_REVIEW_SYSTEM_PROMPT = `You are an expert personal finance analyst.
+Classify merchant spending patterns — not individual transactions.
+Focus on whether a merchant represents a recurring obligation or variable spending.
+Return ONLY valid JSON — no markdown, no explanation.`;
+
+export function buildMerchantReviewPrompt(merchants: MerchantReviewInput[]): string {
+  const categoryList = CATEGORIES.map(c =>
+    `${c.id} (${c.name}): ${c.subcategories.map(s => s.id).join(', ')}`
+  ).join('\n');
+
+  const merchantList = merchants.map(m =>
+    `{"name":${JSON.stringify(m.name)},"samples":${JSON.stringify(m.samples)},"avg":${m.avgAmount.toFixed(2)},"count":${m.count},"first":"${m.firstSeen}","last":"${m.lastSeen}","cat":"${m.currentCategoryId}"}`
+  ).join('\n');
+
+  return `Classify these ${merchants.length} merchant spending patterns.
+
+CATEGORIES AVAILABLE:
+${categoryList}
+
+MERCHANT CLASSIFICATION RULES:
+- subscription: fixed amount, consistent interval (streaming, software, gym membership)
+- utility_bill: monthly service with slight amount variation (electric, phone, internet, insurance)
+- irregular_bill: periodic but infrequent obligations (annual fees, quarterly insurance, car registration)
+- variable_spend: no clear recurring pattern — discretionary spending (restaurants, gas, Amazon, retail)
+
+MERCHANTS:
+${merchantList}
+
+Return a JSON object with this exact shape:
+{
+  "results": [
+    {
+      "name": "<exact name from input>",
+      "categoryId": "<category id from list above>",
+      "isRecurring": true|false,
+      "merchantType": "subscription|utility_bill|irregular_bill|variable_spend",
+      "suggestedFrequency": "weekly|biweekly|monthly|quarterly|annual|null",
+      "confidence": <0.0 to 1.0>
+    }
+  ]
+}`;
+}
+
 export function buildHabitDetectionPrompt(aggregateSummary: string): string {
   return `Analyze this family's financial aggregate data and identify 2-3 non-obvious spending patterns or habits.
 
