@@ -1,6 +1,20 @@
 -- Family CFO - Multi-user schema
 -- Run this in the Supabase SQL editor
 
+CREATE TABLE IF NOT EXISTS financial_groups (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL DEFAULT 'personal',
+  color TEXT NOT NULL DEFAULT '#16a34a',
+  icon TEXT NOT NULL DEFAULT '🏠',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS financial_groups_user_id ON financial_groups(user_id);
+
+-- Migration: ALTER TABLE transactions ADD COLUMN IF NOT EXISTS group_id TEXT;
+-- Run the above if upgrading an existing schema.
+
 CREATE TABLE IF NOT EXISTS transactions (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
@@ -16,6 +30,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   tags TEXT[] NOT NULL DEFAULT '{}',
   confidence NUMERIC(4,3) NOT NULL DEFAULT 0,
   is_manual_override BOOLEAN NOT NULL DEFAULT false,
+  group_id TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS transactions_user_id ON transactions(user_id);

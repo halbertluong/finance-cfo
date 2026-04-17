@@ -37,6 +37,18 @@ export interface Transaction {
   tags: string[];
   confidence: number;
   isManualOverride: boolean;
+  groupId?: string;
+}
+
+export type FinancialGroupType = 'personal' | 'rental' | 'business';
+
+export interface FinancialGroup {
+  id: string;
+  name: string;
+  type: FinancialGroupType;
+  color: string;
+  icon: string;
+  createdAt: Date;
 }
 
 export interface Subcategory {

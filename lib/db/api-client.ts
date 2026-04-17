@@ -10,6 +10,7 @@ import {
   AccountBalance,
   RecurringTransaction,
   AnalysisReport,
+  FinancialGroup,
 } from '@/models/types';
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
@@ -44,6 +45,17 @@ export async function updateTransactionCategory(
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ categoryId }),
+  });
+}
+
+export async function bulkUpdateTransactionGroup(
+  txIds: string[],
+  groupId: string | null
+): Promise<void> {
+  await apiFetch('/api/data/transactions/bulk-group', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ txIds, groupId }),
   });
 }
 
@@ -137,6 +149,25 @@ export async function loadRecurring(): Promise<RecurringTransaction[]> {
 
 export async function removeRecurring(id: string): Promise<void> {
   await apiFetch(`/api/data/recurring/${id}`, { method: 'DELETE' });
+}
+
+// ─── Financial Groups ─────────────────────────────────────────────────────────
+
+export async function loadGroups(): Promise<FinancialGroup[]> {
+  const groups = await apiFetch<FinancialGroup[]>('/api/data/groups');
+  return groups.map((g) => ({ ...g, createdAt: new Date(g.createdAt) }));
+}
+
+export async function saveGroup(group: FinancialGroup): Promise<void> {
+  await apiFetch('/api/data/groups', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(group),
+  });
+}
+
+export async function removeGroup(id: string): Promise<void> {
+  await apiFetch(`/api/data/groups/${id}`, { method: 'DELETE' });
 }
 
 // ─── Reports ──────────────────────────────────────────────────────────────────

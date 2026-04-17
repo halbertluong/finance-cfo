@@ -7,6 +7,7 @@ import { CATEGORIES, getCategoryColor, getCategoryIcon } from '@/lib/categories'
 import { detectRecurringTransactions, getNextDueDate } from '@/lib/analysis/recurring';
 import { Transaction, RecurringTransaction, RecurringFrequency } from '@/models/types';
 import { MerchantReviewResult } from '@/lib/ai/prompts';
+import { bulkUpdateTransactionGroup } from '@/lib/db/api-client';
 import { v4 as uuidv4 } from 'uuid';
 import {
   Wand2, Search, Check, AlertTriangle, ChevronDown, RefreshCw,
@@ -28,6 +29,7 @@ interface MerchantGroup {
 
 interface RowState {
   categoryId: string;
+  groupId: string | null;
   isRecurring: boolean;
   frequency: RecurringFrequency;
   applied: boolean;
@@ -71,7 +73,7 @@ function dateRangeLabel(first: Date, last: Date): string {
 }
 
 export default function ReviewPage() {
-  const { transactions, recurringItems, updateCategory, upsertRecurring, isLoading } = useAppData();
+  const { transactions, recurringItems, groups, updateCategory, upsertRecurring, isLoading } = useAppData();
 
   const [rowStates, setRowStates] = useState<Record<string, RowState>>({});
   const [aiSuggestions, setAiSuggestions] = useState<Record<string, AISuggestion>>({});
@@ -127,8 +129,11 @@ export default function ReviewPage() {
       const next = { ...prev };
       for (const g of merchantGroups) {
         if (!next[g.key]) {
+          // Preserve existing groupId if transactions are already tagged
+          const existingGroupId = g.transactions.find((t) => t.groupId)?.groupId ?? null;
           next[g.key] = {
             categoryId: g.dominantCategoryId,
+            groupId: existingGroupId,
             isRecurring: false,
             frequency: 'monthly',
             applied: false,
@@ -275,6 +280,12 @@ export default function ReviewPage() {
     try {
       await Promise.all(
         group.transactions.map((t) => updateCategory(t.id, state.categoryId))
+      );
+
+      // Update group tag in bulk (single DB call)
+      await bulkUpdateTransactionGroup(
+        group.transactions.map((t) => t.id),
+        state.groupId
       );
 
       if (state.isRecurring) {
@@ -444,6 +455,7 @@ export default function ReviewPage() {
                 group={g}
                 state={state}
                 suggestion={suggestion}
+                groups={groups}
                 onUpdateState={(patch) => updateRow(g.key, patch)}
                 onApply={() => handleApplyRow(g.key)}
               />
@@ -459,12 +471,14 @@ function MerchantRow({
   group,
   state,
   suggestion,
+  groups,
   onUpdateState,
   onApply,
 }: {
   group: MerchantGroup;
   state: RowState;
   suggestion?: AISuggestion;
+  groups: import('@/models/types').FinancialGroup[];
   onUpdateState: (patch: Partial<RowState>) => void;
   onApply: () => void;
 }) {
@@ -523,6 +537,24 @@ function MerchantRow({
             </select>
             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
           </div>
+
+          {/* Group select (only shown when groups exist) */}
+          {groups.length > 0 && (
+            <div className="relative">
+              <select
+                value={state.groupId ?? ''}
+                onChange={(e) => onUpdateState({ groupId: e.target.value || null })}
+                disabled={state.applied}
+                className="appearance-none pr-7 pl-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 disabled:opacity-50 bg-white min-w-[130px]"
+              >
+                <option value="">No group</option>
+                {groups.map((g) => (
+                  <option key={g.id} value={g.id}>{g.icon} {g.name}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+            </div>
+          )}
 
           {/* Recurring toggle */}
           <div className="flex items-center gap-1.5">

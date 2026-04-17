@@ -7,10 +7,11 @@ import {
   updateTransactionCategory, saveBudget, removeBudget as dbDeleteBudget,
   saveGoal, removeGoal as dbDeleteGoal, saveAccount, removeAccount as dbDeleteAccount,
   saveAccountBalance, saveRecurring, removeRecurring as dbDeleteRecurring,
+  loadGroups, saveGroup, removeGroup as dbDeleteGroup,
 } from '@/lib/db/api-client';
 import {
   Transaction, Budget, Goal, Account, AccountBalance,
-  RecurringTransaction, AnalysisReport,
+  RecurringTransaction, AnalysisReport, FinancialGroup,
 } from '@/models/types';
 
 interface AppDataContextValue {
@@ -20,6 +21,7 @@ interface AppDataContextValue {
   accounts: Account[];
   accountBalances: AccountBalance[];
   recurringItems: RecurringTransaction[];
+  groups: FinancialGroup[];
   latestReport: AnalysisReport | null;
   isLoading: boolean;
   refresh: () => Promise<void>;
@@ -33,6 +35,8 @@ interface AppDataContextValue {
   addBalance: (balance: AccountBalance) => Promise<void>;
   upsertRecurring: (item: RecurringTransaction) => Promise<void>;
   removeRecurring: (id: string) => Promise<void>;
+  upsertGroup: (group: FinancialGroup) => Promise<void>;
+  removeGroup: (id: string) => Promise<void>;
 }
 
 const AppDataContext = createContext<AppDataContextValue | null>(null);
@@ -44,19 +48,21 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountBalances, setAccountBalances] = useState<AccountBalance[]>([]);
   const [recurringItems, setRecurringItems] = useState<RecurringTransaction[]>([]);
+  const [groups, setGroups] = useState<FinancialGroup[]>([]);
   const [latestReport, setLatestReport] = useState<AnalysisReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [txs, budg, gls, accs, bals, recs, report] = await Promise.all([
+      const [txs, budg, gls, accs, bals, recs, grps, report] = await Promise.all([
         loadTransactions(),
         loadBudgets(),
         loadGoals(),
         loadAccounts(),
         loadAccountBalances(),
         loadRecurring(),
+        loadGroups(),
         loadLatestReport(),
       ]);
       setTransactions(txs);
@@ -65,6 +71,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setAccounts(accs);
       setAccountBalances(bals);
       setRecurringItems(recs);
+      setGroups(grps);
       setLatestReport(report);
     } catch (e) {
       // Silently handle API errors (e.g. 401 Unauthorized) — middleware
@@ -143,12 +150,27 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setRecurringItems((prev) => prev.filter((r) => r.id !== id));
   };
 
+  const upsertGroup = async (group: FinancialGroup) => {
+    await saveGroup(group);
+    setGroups((prev) => {
+      const idx = prev.findIndex((g) => g.id === group.id);
+      return idx >= 0 ? prev.map((g) => g.id === group.id ? group : g) : [...prev, group];
+    });
+  };
+
+  const removeGroup = async (id: string) => {
+    await dbDeleteGroup(id);
+    setGroups((prev) => prev.filter((g) => g.id !== id));
+    setTransactions((prev) => prev.map((t) => t.groupId === id ? { ...t, groupId: undefined } : t));
+  };
+
   return (
     <AppDataContext.Provider value={{
       transactions, budgets, goals, accounts, accountBalances, recurringItems,
-      latestReport, isLoading, refresh,
+      groups, latestReport, isLoading, refresh,
       updateCategory, upsertBudget, removeBudget, upsertGoal, removeGoal,
       upsertAccount, removeAccount, addBalance, upsertRecurring, removeRecurring,
+      upsertGroup, removeGroup,
     }}>
       {children}
     </AppDataContext.Provider>

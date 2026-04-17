@@ -7,6 +7,7 @@ import {
   AccountBalance,
   RecurringTransaction,
   AnalysisReport,
+  FinancialGroup,
 } from '@/models/types';
 
 let _sql: ReturnType<typeof postgres> | null = null;
@@ -45,6 +46,7 @@ export async function dbSaveTransactions(userId: string, txs: Transaction[]): Pr
           tags: t.tags,
           confidence: t.confidence,
           is_manual_override: t.isManualOverride,
+          group_id: t.groupId ?? null,
         }))
       )}
       ON CONFLICT (id) DO UPDATE SET
@@ -53,7 +55,8 @@ export async function dbSaveTransactions(userId: string, txs: Transaction[]): Pr
         account_id = EXCLUDED.account_id,
         tags = EXCLUDED.tags,
         confidence = EXCLUDED.confidence,
-        is_manual_override = EXCLUDED.is_manual_override
+        is_manual_override = EXCLUDED.is_manual_override,
+        group_id = EXCLUDED.group_id
     `;
   }
 }
@@ -100,7 +103,35 @@ function rowToTransaction(r: Record<string, unknown>): Transaction {
     tags: (r.tags as string[]) ?? [],
     confidence: parseFloat(r.confidence as string),
     isManualOverride: r.is_manual_override as boolean,
+    groupId: r.group_id as string | undefined,
   };
+}
+
+export async function dbUpdateTransactionGroup(
+  userId: string,
+  txId: string,
+  groupId: string | null
+): Promise<void> {
+  const db = sql();
+  await db`
+    UPDATE transactions
+    SET group_id = ${groupId}
+    WHERE id = ${txId} AND user_id = ${userId}
+  `;
+}
+
+export async function dbBulkUpdateTransactionGroup(
+  userId: string,
+  txIds: string[],
+  groupId: string | null
+): Promise<void> {
+  if (txIds.length === 0) return;
+  const db = sql();
+  await db`
+    UPDATE transactions
+    SET group_id = ${groupId}
+    WHERE user_id = ${userId} AND id = ANY(${txIds})
+  `;
 }
 
 // ─── Accounts ────────────────────────────────────────────────────────────────
@@ -326,4 +357,45 @@ export async function dbLoadLatestReport(userId: string): Promise<AnalysisReport
     SELECT data FROM reports WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 1
   `;
   return rows.length > 0 ? (rows[0].data as AnalysisReport) : null;
+}
+
+// ─── Financial Groups ─────────────────────────────────────────────────────────
+
+export async function dbSaveGroup(userId: string, group: FinancialGroup): Promise<void> {
+  const db = sql();
+  await db`
+    INSERT INTO financial_groups ${db({
+      id: group.id,
+      user_id: userId,
+      name: group.name,
+      type: group.type,
+      color: group.color,
+      icon: group.icon,
+    })}
+    ON CONFLICT (id) DO UPDATE SET
+      name = EXCLUDED.name,
+      type = EXCLUDED.type,
+      color = EXCLUDED.color,
+      icon = EXCLUDED.icon
+  `;
+}
+
+export async function dbLoadGroups(userId: string): Promise<FinancialGroup[]> {
+  const db = sql();
+  const rows = await db`SELECT * FROM financial_groups WHERE user_id = ${userId} ORDER BY created_at`;
+  return rows.map((r) => ({
+    id: r.id as string,
+    name: r.name as string,
+    type: r.type as FinancialGroup['type'],
+    color: r.color as string,
+    icon: r.icon as string,
+    createdAt: new Date(r.created_at as string),
+  }));
+}
+
+export async function dbRemoveGroup(userId: string, id: string): Promise<void> {
+  const db = sql();
+  // Unlink transactions before removing the group
+  await db`UPDATE transactions SET group_id = NULL WHERE group_id = ${id} AND user_id = ${userId}`;
+  await db`DELETE FROM financial_groups WHERE id = ${id} AND user_id = ${userId}`;
 }
