@@ -96,7 +96,7 @@ export default function RecurringPage() {
   const inactive = recurringItems.filter((r) => !r.active);
 
   const totalMonthly = active.reduce((s, r) => {
-    const multiplier = r.frequency === 'weekly' ? 4.33 : r.frequency === 'biweekly' ? 2.17 :
+    const multiplier = r.frequency === 'weekly' ? 52 / 12 : r.frequency === 'biweekly' ? 26 / 12 :
       r.frequency === 'monthly' ? 1 : r.frequency === 'quarterly' ? 1 / 3 : 1 / 12;
     return s + r.amount * multiplier;
   }, 0);

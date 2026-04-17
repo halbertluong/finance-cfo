@@ -13,9 +13,20 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell,
 } from 'recharts';
-import { PresentationIcon, TrendingUp, TrendingDown, Minus, ArrowRight } from 'lucide-react';
+import { PresentationIcon, TrendingUp, TrendingDown, Minus, ArrowRight, RefreshCw } from 'lucide-react';
+import { RecurringFrequency } from '@/models/types';
 import Link from 'next/link';
 import { format } from 'date-fns';
+
+function toMonthly(amount: number, freq: RecurringFrequency): number {
+  switch (freq) {
+    case 'weekly':    return amount * (52 / 12);
+    case 'biweekly':  return amount * (26 / 12);
+    case 'monthly':   return amount;
+    case 'quarterly': return amount / 3;
+    case 'annual':    return amount / 12;
+  }
+}
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
@@ -99,6 +110,17 @@ export default function DashboardPage() {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 8),
     [monthTransactions]);
+
+  const monthlyCommitted = useMemo(() => {
+    const active = recurringItems.filter((r) => r.active);
+    const total = active.reduce((s, r) => s + toMonthly(r.amount, r.frequency), 0);
+    const pctOfIncome = income > 0 ? (total / income) * 100 : 0;
+    const topItems = [...active]
+      .sort((a, b) => toMonthly(b.amount, b.frequency) - toMonthly(a.amount, a.frequency))
+      .slice(0, 5)
+      .map((r) => ({ ...r, monthly: toMonthly(r.amount, r.frequency) }));
+    return { total, pctOfIncome, topItems, count: active.length };
+  }, [recurringItems, income]);
 
   const upcoming = useMemo(() => {
     const now = new Date();
@@ -235,6 +257,50 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
+          )}
+        </div>
+
+        {/* Monthly Commitments */}
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-sm text-gray-900">Monthly Commitments</h2>
+            <Link href="/recurring" className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1">
+              Manage <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          {monthlyCommitted.count === 0 ? (
+            <div className="text-center py-6">
+              <RefreshCw className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+              <p className="text-gray-400 text-sm">No recurring items tracked.</p>
+              <Link href="/review" className="text-green-600 text-xs mt-2 inline-block hover:text-green-700">
+                Identify fixed expenses →
+              </Link>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-end justify-between mb-3">
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{fmt(monthlyCommitted.total)}</p>
+                  <p className="text-xs text-gray-400">/month committed · {monthlyCommitted.count} items</p>
+                </div>
+                <span className={`text-sm font-semibold px-2 py-1 rounded-lg ${
+                  monthlyCommitted.pctOfIncome < 40 ? 'bg-green-100 text-green-700' :
+                  monthlyCommitted.pctOfIncome < 60 ? 'bg-amber-100 text-amber-700' :
+                  'bg-red-100 text-red-600'
+                }`}>
+                  {monthlyCommitted.pctOfIncome.toFixed(0)}% of income
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                {monthlyCommitted.topItems.map((r) => (
+                  <div key={r.id} className="flex items-center gap-2 text-xs">
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: getCategoryColor(r.categoryId) }} />
+                    <span className="text-gray-500 flex-1 truncate">{r.normalizedMerchant}</span>
+                    <span className="text-gray-700 font-medium tabular-nums">{fmt(r.monthly)}/mo</span>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
 
