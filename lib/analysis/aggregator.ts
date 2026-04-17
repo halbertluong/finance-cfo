@@ -40,7 +40,9 @@ export function aggregateByCategory(transactions: Transaction[]): CategoryAnalys
 function buildMonthlyBreakdown(transactions: Transaction[]): MonthlyAmount[] {
   const map = new Map<string, number>();
   for (const t of transactions) {
-    const d = t.date instanceof Date ? t.date : new Date(t.date);
+    if (!t.date) continue;
+    const d = t.date instanceof Date ? t.date : new Date(t.date as unknown as string);
+    if (!d || isNaN(d.getTime())) continue;
     const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
     map.set(key, (map.get(key) ?? 0) + t.amount);
   }
@@ -103,7 +105,9 @@ export function getMonthlySpendingData(transactions: Transaction[]) {
   const months = new Map<string, { income: number; expenses: number }>();
   for (const t of transactions) {
     if (t.categoryId === 'transfer') continue;
-    const d = t.date instanceof Date ? t.date : new Date(t.date);
+    if (!t.date) continue;
+    const d = t.date instanceof Date ? t.date : new Date(t.date as unknown as string);
+    if (!d || isNaN(d.getTime())) continue;
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const entry = months.get(key) ?? { income: 0, expenses: 0 };
     if (t.type === 'credit') entry.income += t.amount;

@@ -34,7 +34,9 @@ export function getSpentForCategory(
   const [year, month] = monthKey.split('-').map(Number);
   return transactions
     .filter((t) => {
+      if (!t.date) return false;
       const d = new Date(t.date);
+      if (isNaN(d.getTime())) return false;
       return (
         t.categoryId === categoryId &&
         t.type === 'debit' &&
@@ -80,7 +82,16 @@ export function computeBudgetStatus(
 export function getAvailableMonthKeys(transactions: Transaction[]): string[] {
   const keys = new Set<string>();
   for (const t of transactions) {
-    keys.add(monthKey(new Date(t.date)));
+    if (!t.date) continue;
+    const d = new Date(t.date);
+    if (isNaN(d.getTime())) continue;
+    keys.add(monthKey(d));
   }
   return Array.from(keys).sort().reverse();
+}
+
+export function safeDate(date: unknown): Date | null {
+  if (!date) return null;
+  const d = date instanceof Date ? date : new Date(date as string);
+  return isNaN(d.getTime()) ? null : d;
 }

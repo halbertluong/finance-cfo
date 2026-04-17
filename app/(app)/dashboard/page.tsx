@@ -49,7 +49,9 @@ export default function DashboardPage() {
 
   const monthTransactions = useMemo(() =>
     transactions.filter((t) => {
+      if (!t.date) return false;
       const d = new Date(t.date);
+      if (isNaN(d.getTime())) return false;
       const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       return k === selectedMonth;
     }), [transactions, selectedMonth]);
@@ -334,7 +336,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-gray-800 truncate font-medium">{t.normalizedMerchant || t.description}</p>
-                  <p className="text-xs text-gray-400">{format(new Date(t.date), 'MMM d')}</p>
+                  <p className="text-xs text-gray-400">{t.date ? format(new Date(t.date), 'MMM d') : '—'}</p>
                 </div>
                 <span className={`text-sm font-semibold tabular-nums ${t.type === 'credit' ? 'text-green-600' : 'text-gray-700'}`}>
                   {t.type === 'credit' ? '+' : '-'}{fmt(t.amount)}
