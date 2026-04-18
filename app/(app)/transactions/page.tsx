@@ -62,7 +62,9 @@ export default function TransactionsPage() {
   const months = useMemo(() => {
     const keys = new Set<string>();
     for (const t of transactions) {
+      if (!t.date) continue;
       const d = new Date(t.date);
+      if (isNaN(d.getTime())) continue;
       keys.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
     }
     return Array.from(keys).sort().reverse();
@@ -73,7 +75,9 @@ export default function TransactionsPage() {
       if (filterType !== 'all' && t.type !== filterType) return false;
       if (filterCategory && t.categoryId !== filterCategory) return false;
       if (filterMonth) {
+        if (!t.date) return false;
         const d = new Date(t.date);
+        if (isNaN(d.getTime())) return false;
         const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         if (k !== filterMonth) return false;
       }

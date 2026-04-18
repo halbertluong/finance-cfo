@@ -103,8 +103,9 @@ export default function BudgetsPage() {
     const budgetedIds = new Set(monthBudgets.map((b) => b.categoryId));
     const spentIds = new Set(
       transactions.filter((t) => {
-        if (t.type !== 'debit' || t.categoryId === 'transfer') return false;
+        if (t.type !== 'debit' || t.categoryId === 'transfer' || !t.date) return false;
         const d = new Date(t.date);
+        if (isNaN(d.getTime())) return false;
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` === selectedMonth;
       }).map((t) => t.categoryId)
     );
