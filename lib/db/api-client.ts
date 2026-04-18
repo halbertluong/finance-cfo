@@ -34,7 +34,9 @@ export async function saveTransactions(txs: Transaction[]): Promise<void> {
 
 export async function loadTransactions(): Promise<Transaction[]> {
   const txs = await apiFetch<Transaction[]>('/api/data/transactions');
-  return txs.map((t) => ({ ...t, date: new Date(t.date) }));
+  return txs
+    .filter((t) => t.date != null)
+    .map((t) => ({ ...t, date: new Date(t.date) }));
 }
 
 export async function updateTransactionCategory(
