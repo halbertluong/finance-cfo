@@ -8,12 +8,12 @@ import { MonthPicker } from '@/components/ui/MonthPicker';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { getCategoryColor, getCategoryIcon, getCategoryName } from '@/lib/categories';
 import { getAvailableMonthKeys, computeBudgetStatus, monthKey } from '@/lib/budgets';
-import { getTopMerchants, getMonthlySpendingData } from '@/lib/analysis/aggregator';
+import { getMonthlySpendingData } from '@/lib/analysis/aggregator';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell,
 } from 'recharts';
-import { PresentationIcon, TrendingUp, TrendingDown, Minus, ArrowRight, RefreshCw } from 'lucide-react';
+import { PresentationIcon, ArrowRight, RefreshCw } from 'lucide-react';
 import { RecurringFrequency } from '@/models/types';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -67,13 +67,14 @@ export default function DashboardPage() {
   const savingsRate = income > 0 ? ((income - expenses) / income) * 100 : 0;
 
   const latestBalances = useMemo(() => {
-    const map: Record<string, number> = {};
+    const map: Record<string, { balance: number; date: number }> = {};
     for (const b of accountBalances) {
-      if (!map[b.accountId] || new Date(b.date) > new Date(accountBalances.find(x => x.accountId === b.accountId && x.id !== b.id)?.date ?? 0)) {
-        map[b.accountId] = b.balance;
+      const ts = b.date ? new Date(b.date).getTime() : 0;
+      if (!map[b.accountId] || ts > map[b.accountId].date) {
+        map[b.accountId] = { balance: b.balance, date: ts };
       }
     }
-    return map;
+    return Object.fromEntries(Object.entries(map).map(([k, v]) => [k, v.balance]));
   }, [accountBalances]);
 
   const netWorth = useMemo(() => {

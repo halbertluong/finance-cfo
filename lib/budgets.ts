@@ -1,6 +1,7 @@
 import { Budget, BudgetStatus, Transaction } from '@/models/types';
 
 export function monthKey(date: Date): string {
+  if (!date || isNaN(date.getTime())) return '0000-00';
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
