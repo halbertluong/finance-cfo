@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CSVDropzone } from '@/components/upload/CSVDropzone';
 import { ColumnMapper } from '@/components/upload/ColumnMapper';
@@ -15,8 +15,11 @@ type Step = 'landing' | 'upload' | 'mapping' | 'options' | 'processing';
 
 export default function Home() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>('landing');
-  const stepRef = useRef<Step>('landing');
+  const searchParams = useSearchParams();
+  const importing = searchParams.get('import') === 'true';
+  const initialStep: Step = importing ? 'upload' : 'landing';
+  const [step, setStep] = useState<Step>(initialStep);
+  const stepRef = useRef<Step>(initialStep);
   const [csv, setCsv] = useState<ParsedCSV | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping | null>(null);
   const [familyName, setFamilyName] = useState('');
@@ -31,6 +34,7 @@ export default function Home() {
   };
 
   useEffect(() => {
+    if (importing) return;
     import('@/lib/db/api-client').then(({ hasAnyData }) =>
       hasAnyData().then((has) => {
         if (has && stepRef.current === 'landing') router.push('/dashboard');

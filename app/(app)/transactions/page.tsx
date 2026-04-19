@@ -121,7 +121,7 @@ export default function TransactionsPage() {
     return (
       <div className="flex items-center justify-center h-full">
         <EmptyState icon="💳" title="No transactions" description="Import a CSV to see your transactions here."
-          action={<Link href="/" className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold transition-colors">Import CSV</Link>} />
+          action={<Link href="/?import=true" className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold transition-colors">Import CSV</Link>} />
       </div>
     );
   }
@@ -134,7 +134,7 @@ export default function TransactionsPage() {
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Transactions</h1>
           <p className="text-gray-400 text-sm mt-0.5">{filtered.length} of {transactions.length} transactions</p>
         </div>
-        <Link href="/" className="text-sm text-green-700 border border-green-200 bg-green-50 hover:bg-green-100 px-3 py-2 rounded-xl transition-all">
+        <Link href="/?import=true" className="text-sm text-green-700 border border-green-200 bg-green-50 hover:bg-green-100 px-3 py-2 rounded-xl transition-all">
           + Import
         </Link>
       </div>

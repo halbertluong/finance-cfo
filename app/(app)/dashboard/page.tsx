@@ -154,7 +154,7 @@ export default function DashboardPage() {
           title="No data yet"
           description="Import a CSV to get started with your financial dashboard."
           action={
-            <Link href="/" className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold transition-colors">
+            <Link href="/?import=true" className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold transition-colors">
               Import CSV
             </Link>
           }

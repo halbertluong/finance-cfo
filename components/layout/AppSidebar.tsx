@@ -100,7 +100,7 @@ export function AppSidebar() {
       {/* Bottom actions */}
       <div className="px-3 py-4 border-t border-white/10 space-y-1">
         <Link
-          href="/"
+          href="/?import=true"
           onClick={() => setMobileOpen(false)}
           className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-green-100/60 hover:text-white hover:bg-white/10 transition-all"
         >
