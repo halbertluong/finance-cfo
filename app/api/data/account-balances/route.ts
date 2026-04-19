@@ -7,7 +7,8 @@ export async function GET() {
     const userId = await requireUserId();
     return NextResponse.json(await dbLoadLatestBalances(userId));
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 401 });
+    const status = String(e).includes('Unauthorized') ? 401 : 500;
+    return NextResponse.json({ error: String(e) }, { status });
   }
 }
 
@@ -18,6 +19,7 @@ export async function POST(req: NextRequest) {
     await dbSaveAccountBalance(userId, bal);
     return NextResponse.json({ ok: true });
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 401 });
+    const status = String(e).includes('Unauthorized') ? 401 : 500;
+    return NextResponse.json({ error: String(e) }, { status });
   }
 }

@@ -9,6 +9,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     await dbRemoveAccount(userId, id);
     return NextResponse.json({ ok: true });
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 401 });
+    const status = String(e).includes('Unauthorized') ? 401 : 500;
+    return NextResponse.json({ error: String(e) }, { status });
   }
 }

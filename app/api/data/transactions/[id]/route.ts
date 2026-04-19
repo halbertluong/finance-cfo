@@ -15,6 +15,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
     return NextResponse.json({ ok: true });
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 401 });
+    const status = String(e).includes('Unauthorized') ? 401 : 500;
+    return NextResponse.json({ error: String(e) }, { status });
   }
 }

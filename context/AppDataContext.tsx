@@ -56,14 +56,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       const [txs, budg, gls, accs, bals, recs, grps, report] = await Promise.all([
-        loadTransactions(),
-        loadBudgets(),
-        loadGoals(),
-        loadAccounts(),
-        loadAccountBalances(),
-        loadRecurring(),
-        loadGroups(),
-        loadLatestReport(),
+        loadTransactions().catch((e) => { console.error('loadTransactions failed:', e); return [] as Transaction[]; }),
+        loadBudgets().catch((e) => { console.error('loadBudgets failed:', e); return [] as Budget[]; }),
+        loadGoals().catch((e) => { console.error('loadGoals failed:', e); return [] as Goal[]; }),
+        loadAccounts().catch((e) => { console.error('loadAccounts failed:', e); return [] as Account[]; }),
+        loadAccountBalances().catch((e) => { console.error('loadAccountBalances failed:', e); return [] as AccountBalance[]; }),
+        loadRecurring().catch((e) => { console.error('loadRecurring failed:', e); return [] as RecurringTransaction[]; }),
+        loadGroups().catch((e) => { console.error('loadGroups failed:', e); return [] as FinancialGroup[]; }),
+        loadLatestReport().catch((e) => { console.error('loadLatestReport failed:', e); return null; }),
       ]);
       setTransactions(txs);
       setBudgets(budg);
@@ -74,8 +74,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setGroups(grps);
       setLatestReport(report);
     } catch (e) {
-      // Silently handle API errors (e.g. 401 Unauthorized) — middleware
-      // should redirect unauthenticated users before they reach this point.
       console.error('AppDataContext: failed to load data:', e);
     } finally {
       setIsLoading(false);
