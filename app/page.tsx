@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CSVDropzone } from '@/components/upload/CSVDropzone';
@@ -13,7 +13,7 @@ import { auth } from '@/lib/firebase/client';
 
 type Step = 'landing' | 'upload' | 'mapping' | 'options' | 'processing';
 
-export default function Home() {
+function HomeInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const importing = searchParams.get('import') === 'true';
@@ -300,5 +300,13 @@ export default function Home() {
         </AnimatePresence>
       </div>
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense>
+      <HomeInner />
+    </Suspense>
   );
 }
