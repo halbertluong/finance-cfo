@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CSVDropzone } from '@/components/upload/CSVDropzone';
@@ -16,6 +16,7 @@ type Step = 'landing' | 'upload' | 'mapping' | 'options' | 'processing';
 export default function Home() {
   const router = useRouter();
   const [step, setStep] = useState<Step>('landing');
+  const stepRef = useRef<Step>('landing');
   const [csv, setCsv] = useState<ParsedCSV | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping | null>(null);
   const [familyName, setFamilyName] = useState('');
@@ -31,24 +32,28 @@ export default function Home() {
 
   useEffect(() => {
     import('@/lib/db/api-client').then(({ hasAnyData }) =>
-      hasAnyData().then((has) => { if (has) router.push('/dashboard'); }).catch(() => {})
+      hasAnyData().then((has) => {
+        if (has && stepRef.current === 'landing') router.push('/dashboard');
+      }).catch(() => {})
     ).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const goToStep = (s: Step) => { stepRef.current = s; setStep(s); };
+
   const handleCSVParsed = (parsed: ParsedCSV) => {
     setCsv(parsed);
-    setStep('mapping');
+    goToStep('mapping');
   };
 
   const handleMappingConfirmed = (m: ColumnMapping) => {
     setMapping(m);
-    setStep('options');
+    goToStep('options');
   };
 
   const handleStartAnalysis = async () => {
     if (!csv || !mapping) return;
-    setStep('processing');
+    goToStep('processing');
     await runAnalysis(csv.rows, mapping, {
       familyName: familyName || 'My Family',
       netWorth: netWorth ? parseFloat(netWorth.replace(/,/g, '')) : undefined,
@@ -122,7 +127,7 @@ export default function Home() {
 
               <div className="text-center space-y-3">
                 <button
-                  onClick={() => setStep('upload')}
+                  onClick={() => goToStep('upload')}
                   className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-4 rounded-2xl text-base transition-all duration-200 shadow-lg shadow-green-200"
                 >
                   Get Started
@@ -142,7 +147,7 @@ export default function Home() {
               className="space-y-6"
             >
               <div>
-                <button onClick={() => setStep('landing')} className="text-gray-400 hover:text-gray-600 text-sm mb-4 transition-colors">
+                <button onClick={() => goToStep('landing')} className="text-gray-400 hover:text-gray-600 text-sm mb-4 transition-colors">
                   ← Back
                 </button>
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Upload Your CSV</h2>
@@ -172,7 +177,7 @@ export default function Home() {
               className="space-y-6"
             >
               <div>
-                <button onClick={() => setStep('upload')} className="text-gray-400 hover:text-gray-600 text-sm mb-4 transition-colors">
+                <button onClick={() => goToStep('upload')} className="text-gray-400 hover:text-gray-600 text-sm mb-4 transition-colors">
                   ← Back
                 </button>
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Map Your Columns</h2>
@@ -190,7 +195,7 @@ export default function Home() {
               className="space-y-6"
             >
               <div>
-                <button onClick={() => setStep('mapping')} className="text-gray-400 hover:text-gray-600 text-sm mb-4 transition-colors">
+                <button onClick={() => goToStep('mapping')} className="text-gray-400 hover:text-gray-600 text-sm mb-4 transition-colors">
                   ← Back
                 </button>
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">A Few Details</h2>
@@ -275,7 +280,7 @@ export default function Home() {
                   <p className="font-semibold mb-1">Something went wrong</p>
                   <p className="text-red-400">{error}</p>
                   <button
-                    onClick={() => setStep('options')}
+                    onClick={() => goToStep('options')}
                     className="mt-3 text-xs text-red-500 hover:text-red-700 underline"
                   >
                     Go back and try again
