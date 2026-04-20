@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CSVDropzone } from '@/components/upload/CSVDropzone';
 import { ColumnMapper } from '@/components/upload/ColumnMapper';
@@ -15,11 +15,8 @@ type Step = 'landing' | 'upload' | 'mapping' | 'options' | 'processing';
 
 function HomeInner() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const importing = searchParams.get('import') === 'true';
-  const initialStep: Step = importing ? 'upload' : 'landing';
-  const [step, setStep] = useState<Step>(initialStep);
-  const stepRef = useRef<Step>(initialStep);
+  const [step, setStep] = useState<Step>('landing');
+  const stepRef = useRef<Step>('landing');
   const [csv, setCsv] = useState<ParsedCSV | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping | null>(null);
   const [familyName, setFamilyName] = useState('');
@@ -34,7 +31,15 @@ function HomeInner() {
   };
 
   useEffect(() => {
-    if (importing) return;
+    // If opened via "Import CSV" link from within the app, go straight to upload
+    // and skip the hasAnyData redirect. Check window.location directly — always
+    // client-side, never affected by SSR/Suspense rendering order.
+    const isImporting = window.location.search.includes('import=true');
+    if (isImporting) {
+      stepRef.current = 'upload';
+      setStep('upload');
+      return;
+    }
     import('@/lib/db/api-client').then(({ hasAnyData }) =>
       hasAnyData().then((has) => {
         if (has && stepRef.current === 'landing') router.push('/dashboard');
