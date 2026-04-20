@@ -8,7 +8,7 @@ import { RecurringTransaction } from '@/models/types';
 import { detectRecurringTransactions } from '@/lib/analysis/recurring';
 import { getCategoryIcon, getCategoryName, CATEGORIES } from '@/lib/categories';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Check, X, RefreshCw, Trash2, Power } from 'lucide-react';
+import { Plus, Check, X, RefreshCw, Trash2, Power, Pencil } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 
 const fmt = (n: number) =>
@@ -19,21 +19,19 @@ const FREQ_LABELS: Record<string, string> = {
   quarterly: 'Quarterly', annual: 'Annual',
 };
 
-function AddRecurringModal({ onSave, onClose }: { onSave: (r: RecurringTransaction) => void; onClose: () => void }) {
-  const [name, setName] = useState('');
-  const [categoryId, setCategoryId] = useState('subscriptions');
-  const [amount, setAmount] = useState('');
-  const [frequency, setFrequency] = useState<RecurringTransaction['frequency']>('monthly');
-  const [nextDue, setNextDue] = useState('');
+function AddRecurringModal({ onSave, onClose, initial }: { onSave: (r: RecurringTransaction) => void; onClose: () => void; initial?: RecurringTransaction }) {
+  const [name, setName] = useState(initial?.merchantName ?? '');
+  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? 'subscriptions');
+  const [amount, setAmount] = useState(initial ? String(initial.amount) : '');
+  const [frequency, setFrequency] = useState<RecurringTransaction['frequency']>(initial?.frequency ?? 'monthly');
+  const [nextDue, setNextDue] = useState(initial?.nextDueDate ? format(new Date(initial.nextDueDate), 'yyyy-MM-dd') : '');
 
   const handleSave = () => {
     if (!name || !amount) return;
-    onSave({
-      id: uuidv4(), merchantName: name, normalizedMerchant: name,
-      categoryId, amount: parseFloat(amount), frequency,
-      nextDueDate: nextDue ? new Date(nextDue) : undefined,
-      active: true, isManuallyAdded: true, autoDetected: false,
-    });
+    onSave(initial
+      ? { ...initial, merchantName: name, normalizedMerchant: initial.normalizedMerchant, categoryId, amount: parseFloat(amount), frequency, nextDueDate: nextDue ? new Date(nextDue) : undefined }
+      : { id: uuidv4(), merchantName: name, normalizedMerchant: name, categoryId, amount: parseFloat(amount), frequency, nextDueDate: nextDue ? new Date(nextDue) : undefined, active: true, isManuallyAdded: true, autoDetected: false }
+    );
   };
 
   return (
@@ -76,7 +74,7 @@ function AddRecurringModal({ onSave, onClose }: { onSave: (r: RecurringTransacti
         <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm hover:bg-gray-50 transition-colors">Cancel</button>
         <button onClick={handleSave} disabled={!name || !amount}
           className="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold disabled:opacity-40 transition-colors">
-          Add Bill
+          {initial ? 'Save Changes' : 'Add Bill'}
         </button>
       </div>
     </div>
@@ -86,6 +84,7 @@ function AddRecurringModal({ onSave, onClose }: { onSave: (r: RecurringTransacti
 export default function RecurringPage() {
   const { transactions, recurringItems, upsertRecurring, removeRecurring, isLoading } = useAppData();
   const [modalOpen, setModalOpen] = useState(false);
+  const [editItem, setEditItem] = useState<RecurringTransaction | null>(null);
 
   const suggestions = useMemo(() => {
     const existingNames = new Set(recurringItems.map((r) => r.normalizedMerchant));
@@ -201,6 +200,10 @@ export default function RecurringPage() {
                         </td>
                         <td className="px-5 py-3">
                           <div className="flex items-center justify-end gap-1">
+                            <button onClick={() => setEditItem(r)}
+                              className="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-green-600 rounded-lg transition-colors" title="Edit">
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
                             <button onClick={() => upsertRecurring({ ...r, active: false })}
                               className="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-amber-500 rounded-lg transition-colors" title="Deactivate">
                               <Power className="w-3.5 h-3.5" />
@@ -239,6 +242,9 @@ export default function RecurringPage() {
                         </p>
                       )}
                     </div>
+                    <button onClick={() => setEditItem(r)} className="text-gray-300 hover:text-green-600 transition-colors ml-1">
+                      <Pencil className="w-4 h-4" />
+                    </button>
                     <button onClick={() => removeRecurring(r.id)} className="text-gray-300 hover:text-red-500 transition-colors ml-1">
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -270,6 +276,15 @@ export default function RecurringPage() {
         <AddRecurringModal
           onSave={async (r) => { await upsertRecurring(r); setModalOpen(false); }}
           onClose={() => setModalOpen(false)} />
+      </Modal>
+
+      <Modal open={!!editItem} onClose={() => setEditItem(null)} title="Edit Bill">
+        {editItem && (
+          <AddRecurringModal
+            initial={editItem}
+            onSave={async (r) => { await upsertRecurring(r); setEditItem(null); }}
+            onClose={() => setEditItem(null)} />
+        )}
       </Modal>
     </div>
   );

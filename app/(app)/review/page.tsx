@@ -527,9 +527,8 @@ function MerchantRow({
           <div className="relative">
             <select
               value={state.categoryId}
-              onChange={(e) => onUpdateState({ categoryId: e.target.value })}
-              disabled={state.applied}
-              className="appearance-none pr-7 pl-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 disabled:opacity-50 bg-white min-w-[140px]"
+              onChange={(e) => onUpdateState({ categoryId: e.target.value, applied: false })}
+              className="appearance-none pr-7 pl-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 bg-white min-w-[140px]"
             >
               {SELECTABLE_CATEGORIES.map((c) => (
                 <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
@@ -543,9 +542,8 @@ function MerchantRow({
             <div className="relative">
               <select
                 value={state.groupId ?? ''}
-                onChange={(e) => onUpdateState({ groupId: e.target.value || null })}
-                disabled={state.applied}
-                className="appearance-none pr-7 pl-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 disabled:opacity-50 bg-white min-w-[130px]"
+                onChange={(e) => onUpdateState({ groupId: e.target.value || null, applied: false })}
+                className="appearance-none pr-7 pl-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 bg-white min-w-[130px]"
               >
                 <option value="">No group</option>
                 {groups.map((g) => (
@@ -559,9 +557,8 @@ function MerchantRow({
           {/* Recurring toggle */}
           <div className="flex items-center gap-1.5">
             <button
-              onClick={() => onUpdateState({ isRecurring: !state.isRecurring })}
-              disabled={state.applied}
-              className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 disabled:opacity-50 ${
+              onClick={() => onUpdateState({ isRecurring: !state.isRecurring, applied: false })}
+              className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${
                 state.isRecurring ? 'bg-green-500' : 'bg-gray-300'
               }`}
             >
@@ -579,9 +576,8 @@ function MerchantRow({
             <div className="relative">
               <select
                 value={state.frequency}
-                onChange={(e) => onUpdateState({ frequency: e.target.value as RecurringFrequency })}
-                disabled={state.applied}
-                className="appearance-none pr-7 pl-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 disabled:opacity-50 bg-white"
+                onChange={(e) => onUpdateState({ frequency: e.target.value as RecurringFrequency, applied: false })}
+                className="appearance-none pr-7 pl-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 bg-white"
               >
                 <option value="weekly">Weekly</option>
                 <option value="biweekly">Biweekly</option>
