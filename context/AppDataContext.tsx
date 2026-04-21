@@ -8,10 +8,11 @@ import {
   saveGoal, removeGoal as dbDeleteGoal, saveAccount, removeAccount as dbDeleteAccount,
   saveAccountBalance, saveRecurring, removeRecurring as dbDeleteRecurring,
   loadGroups, saveGroup, removeGroup as dbDeleteGroup,
+  loadPlan, savePlan,
 } from '@/lib/db/api-client';
 import {
   Transaction, Budget, Goal, Account, AccountBalance,
-  RecurringTransaction, AnalysisReport, FinancialGroup,
+  RecurringTransaction, AnalysisReport, FinancialGroup, FinancialPlan,
 } from '@/models/types';
 
 interface AppDataContextValue {
@@ -23,6 +24,7 @@ interface AppDataContextValue {
   recurringItems: RecurringTransaction[];
   groups: FinancialGroup[];
   latestReport: AnalysisReport | null;
+  financialPlan: FinancialPlan | null;
   isLoading: boolean;
   refresh: () => Promise<void>;
   updateCategory: (id: string, categoryId: string) => Promise<void>;
@@ -37,6 +39,7 @@ interface AppDataContextValue {
   removeRecurring: (id: string) => Promise<void>;
   upsertGroup: (group: FinancialGroup) => Promise<void>;
   removeGroup: (id: string) => Promise<void>;
+  upsertPlan: (plan: FinancialPlan) => Promise<void>;
 }
 
 const AppDataContext = createContext<AppDataContextValue | null>(null);
@@ -50,12 +53,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [recurringItems, setRecurringItems] = useState<RecurringTransaction[]>([]);
   const [groups, setGroups] = useState<FinancialGroup[]>([]);
   const [latestReport, setLatestReport] = useState<AnalysisReport | null>(null);
+  const [financialPlan, setFinancialPlan] = useState<FinancialPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [txs, budg, gls, accs, bals, recs, grps, report] = await Promise.all([
+      const [txs, budg, gls, accs, bals, recs, grps, report, plan] = await Promise.all([
         loadTransactions().catch((e) => { console.error('loadTransactions failed:', e); return [] as Transaction[]; }),
         loadBudgets().catch((e) => { console.error('loadBudgets failed:', e); return [] as Budget[]; }),
         loadGoals().catch((e) => { console.error('loadGoals failed:', e); return [] as Goal[]; }),
@@ -64,6 +68,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         loadRecurring().catch((e) => { console.error('loadRecurring failed:', e); return [] as RecurringTransaction[]; }),
         loadGroups().catch((e) => { console.error('loadGroups failed:', e); return [] as FinancialGroup[]; }),
         loadLatestReport().catch((e) => { console.error('loadLatestReport failed:', e); return null; }),
+        loadPlan().catch((e) => { console.error('loadPlan failed:', e); return null; }),
       ]);
       setTransactions(txs);
       setBudgets(budg);
@@ -73,6 +78,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setRecurringItems(recs);
       setGroups(grps);
       setLatestReport(report);
+      setFinancialPlan(plan);
     } catch (e) {
       console.error('AppDataContext: failed to load data:', e);
     } finally {
@@ -162,13 +168,18 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setTransactions((prev) => prev.map((t) => t.groupId === id ? { ...t, groupId: undefined } : t));
   };
 
+  const upsertPlan = async (plan: FinancialPlan) => {
+    await savePlan(plan);
+    setFinancialPlan(plan);
+  };
+
   return (
     <AppDataContext.Provider value={{
       transactions, budgets, goals, accounts, accountBalances, recurringItems,
-      groups, latestReport, isLoading, refresh,
+      groups, latestReport, financialPlan, isLoading, refresh,
       updateCategory, upsertBudget, removeBudget, upsertGoal, removeGoal,
       upsertAccount, removeAccount, addBalance, upsertRecurring, removeRecurring,
-      upsertGroup, removeGroup,
+      upsertGroup, removeGroup, upsertPlan,
     }}>
       {children}
     </AppDataContext.Provider>

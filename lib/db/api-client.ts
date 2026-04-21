@@ -11,6 +11,7 @@ import {
   RecurringTransaction,
   AnalysisReport,
   FinancialGroup,
+  FinancialPlan,
 } from '@/models/types';
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
@@ -181,6 +182,28 @@ export async function saveReport(report: AnalysisReport): Promise<void> {
     body: JSON.stringify(report),
   });
 }
+
+// ─── Financial Plan ───────────────────────────────────────────────────────────
+
+export async function loadPlan(): Promise<FinancialPlan | null> {
+  const plan = await apiFetch<FinancialPlan | null>('/api/data/plan');
+  if (!plan) return null;
+  return {
+    ...plan,
+    createdAt: new Date(plan.createdAt),
+    updatedAt: new Date(plan.updatedAt),
+  };
+}
+
+export async function savePlan(plan: FinancialPlan): Promise<void> {
+  await apiFetch('/api/data/plan', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(plan),
+  });
+}
+
+// ─── Reports ──────────────────────────────────────────────────────────────────
 
 export async function loadLatestReport(): Promise<AnalysisReport | null> {
   const report = await apiFetch<AnalysisReport | null>('/api/data/reports');

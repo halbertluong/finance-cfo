@@ -8,12 +8,13 @@ import { auth } from '@/lib/firebase/client';
 import {
   LayoutDashboard, ArrowLeftRight, PiggyBank, TrendingUp,
   Target, RefreshCw, Wand2, GitBranch, Upload, Presentation, ChevronRight,
-  Download, LogOut, Menu, X,
+  Download, LogOut, Menu, X, LayoutList,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
+  { href: '/plan', icon: LayoutList, label: 'Financial Plan' },
   { href: '/budgets', icon: PiggyBank, label: 'Budgets' },
   { href: '/net-worth', icon: TrendingUp, label: 'Net Worth' },
   { href: '/goals', icon: Target, label: 'Goals' },

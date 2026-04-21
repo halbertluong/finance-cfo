@@ -275,3 +275,91 @@ export interface CategorizationResult {
 export interface CategorizationBatchResponse {
   results: CategorizationResult[];
 }
+
+// ─── Financial Plan ───────────────────────────────────────────────────────────
+
+export type PlanFrequency =
+  | 'weekly' | 'semimonthly' | 'biweekly' | 'monthly'
+  | 'every2months' | 'every3months' | 'quarterly'
+  | 'semiannual' | 'annual';
+
+export interface PaycheckDeduction {
+  id: string;
+  label: string;
+  amount: number; // positive value; rendered as negative (deduction)
+  type: 'tax' | '401k' | 'insurance' | 'espp' | 'other';
+}
+
+export interface IncomeSource {
+  id: string;
+  name: string; // "Mackenzie", "Halbert"
+  grossPerPaycheck: number;
+  paychecksPerYear: number; // 24 for semimonthly
+  payDaysOfMonth: number[]; // [6, 21] or [15, 31]
+  deductions: PaycheckDeduction[];
+  categoryId: string;
+  accountId?: string;
+}
+
+export interface PlannedExpense {
+  id: string;
+  label: string;
+  amount: number; // positive = outflow; set isIncome=true for income items
+  frequency: PlanFrequency;
+  dueDayOfMonth?: number; // for monthly: which day (1, 2, 8, 17...)
+  occurrenceMonths?: number[]; // for non-monthly: which months 1=Jan..12=Dec
+  dueDayOfOccurrenceMonth?: number;
+  categoryId: string;
+  accountId?: string;
+  isIncome?: boolean; // true for rental income lines
+  creditCard?: string; // "AmEx", "Chase Freedom", etc.
+  notes?: string;
+}
+
+export interface FinancialPlan {
+  id: string;
+  label: string; // "2026 Family Plan"
+  year: number;
+  incomeSources: IncomeSource[];
+  fixedExpenses: PlannedExpense[];
+  semiFrequentExpenses: PlannedExpense[];
+  rentalItems: PlannedExpense[];
+  variableCategoryIds: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Computed types for plan computation library
+export interface ComputedIncomeRow {
+  source: IncomeSource;
+  grossMonthly: number;
+  deductionsMonthly: number;
+  netMonthly: number;
+  netPerPaycheck: number;
+  paycheckCount: number;
+  actualMonthly: number;
+  variance: number;
+}
+
+export interface ComputedExpenseRow {
+  expense: PlannedExpense;
+  plannedMonthly: number;
+  isScheduledThisMonth: boolean;
+  plannedThisMonth: number;
+  actualThisMonth: number;
+  variance: number;
+}
+
+export interface CashFlowEvent {
+  label: string;
+  amount: number; // positive = inflow, negative = outflow
+  type: 'paycheck' | 'expense' | 'income';
+  isActual: boolean;
+}
+
+export interface CashFlowCalendarDay {
+  day: number;
+  isWeekend: boolean;
+  events: CashFlowEvent[];
+  runningBalance: number;
+}

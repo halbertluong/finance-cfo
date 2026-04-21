@@ -1,6 +1,16 @@
 -- Family CFO - Multi-user schema
 -- Run this in the Supabase SQL editor
 
+CREATE TABLE IF NOT EXISTS financial_plans (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL UNIQUE,
+  label TEXT NOT NULL DEFAULT '2026 Family Plan',
+  data JSONB NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_financial_plans_user_id ON financial_plans(user_id);
+
 CREATE TABLE IF NOT EXISTS financial_groups (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,

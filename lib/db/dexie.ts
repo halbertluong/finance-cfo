@@ -4,6 +4,7 @@ import Dexie, { type Table } from 'dexie';
 import {
   Transaction, NetWorthSnapshot, AnalysisReport,
   Budget, Goal, Account, AccountBalance, RecurringTransaction,
+  FinancialPlan,
 } from '@/models/types';
 
 type TxRow = Transaction & { _date: number };
@@ -13,6 +14,7 @@ type ABRow = AccountBalance & { _date: number };
 type GoalRow = Goal & { _createdAt: number; _deadline?: number; _completedAt?: number };
 type BudgetRow = Budget & { _createdAt: number };
 type RecurRow = RecurringTransaction & { _nextDue?: number; _lastSeen?: number };
+type PlanRow = Omit<FinancialPlan, 'createdAt' | 'updatedAt'> & { _createdAt: number; _updatedAt: number };
 
 export class FinanceDB extends Dexie {
   transactions!: Table<TxRow, string>;
@@ -23,6 +25,7 @@ export class FinanceDB extends Dexie {
   accounts!: Table<Account, string>;
   accountBalances!: Table<ABRow, string>;
   recurringItems!: Table<RecurRow, string>;
+  financialPlans!: Table<PlanRow, string>;
 
   constructor() {
     super('FinanceCFO');
@@ -40,6 +43,17 @@ export class FinanceDB extends Dexie {
       accounts: 'id, type, isAsset',
       accountBalances: 'id, accountId, _date',
       recurringItems: 'id, categoryId, active',
+    });
+    this.version(3).stores({
+      transactions: 'id, categoryId, type, accountId, _date',
+      netWorthSnapshots: 'id, _date',
+      reports: 'id, _generatedAt',
+      budgets: 'id, categoryId, monthKey',
+      goals: 'id, _createdAt',
+      accounts: 'id, type, isAsset',
+      accountBalances: 'id, accountId, _date',
+      recurringItems: 'id, categoryId, active',
+      financialPlans: 'id',
     });
   }
 }
@@ -209,4 +223,21 @@ export async function loadRecurring(): Promise<RecurringTransaction[]> {
 
 export async function deleteRecurring(id: string): Promise<void> {
   await getDB().recurringItems.delete(id);
+}
+
+// ─── Financial Plan ───────────────────────────────────────────────────────────
+
+export async function savePlan(plan: FinancialPlan): Promise<void> {
+  await getDB().financialPlans.put({
+    ...plan,
+    _createdAt: plan.createdAt.getTime(),
+    _updatedAt: plan.updatedAt.getTime(),
+  } as PlanRow);
+}
+
+export async function loadPlan(): Promise<FinancialPlan | null> {
+  const rows = await getDB().financialPlans.toArray();
+  if (rows.length === 0) return null;
+  const { _createdAt, _updatedAt, ...p } = rows[0];
+  return { ...p, createdAt: new Date(_createdAt), updatedAt: new Date(_updatedAt) };
 }

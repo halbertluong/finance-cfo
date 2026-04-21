@@ -8,6 +8,7 @@ import {
   RecurringTransaction,
   AnalysisReport,
   FinancialGroup,
+  FinancialPlan,
 } from '@/models/types';
 
 let _sql: ReturnType<typeof postgres> | null = null;
@@ -398,4 +399,35 @@ export async function dbRemoveGroup(userId: string, id: string): Promise<void> {
   // Unlink transactions before removing the group
   await db`UPDATE transactions SET group_id = NULL WHERE group_id = ${id} AND user_id = ${userId}`;
   await db`DELETE FROM financial_groups WHERE id = ${id} AND user_id = ${userId}`;
+}
+
+// ─── Financial Plan ───────────────────────────────────────────────────────────
+
+export async function dbSavePlan(userId: string, plan: FinancialPlan): Promise<void> {
+  const db = sql();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await db`
+    INSERT INTO financial_plans ${db({
+      id: plan.id,
+      user_id: userId,
+      label: plan.label,
+      data: db.json(plan as any),
+    })}
+    ON CONFLICT (user_id) DO UPDATE SET
+      label = EXCLUDED.label,
+      data = EXCLUDED.data,
+      updated_at = NOW()
+  `;
+}
+
+export async function dbLoadPlan(userId: string): Promise<FinancialPlan | null> {
+  const db = sql();
+  const rows = await db`SELECT data FROM financial_plans WHERE user_id = ${userId} LIMIT 1`;
+  if (rows.length === 0) return null;
+  const p = rows[0].data as FinancialPlan;
+  return {
+    ...p,
+    createdAt: new Date(p.createdAt),
+    updatedAt: new Date(p.updatedAt),
+  };
 }
