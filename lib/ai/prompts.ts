@@ -1,38 +1,88 @@
 import { CATEGORIES } from '@/lib/categories';
 import { Transaction } from '@/models/types';
 
-export const CATEGORIZATION_SYSTEM_PROMPT = `You are an expert personal finance transaction categorizer.
-Your job is to analyze bank/credit card transactions and assign them to the correct category.
-You must return ONLY valid JSON — no markdown, no explanation, no extra text.
-Be confident with well-known merchants. Use the provided category list strictly.`;
+export const CATEGORIZATION_SYSTEM_PROMPT = `You are an expert personal finance transaction categorizer with deep knowledge of bank statement formats.
+Your job is to analyze raw bank/credit card transaction descriptions and assign them to the most specific correct category.
+
+CRITICAL RULES:
+1. NEVER use "other" unless the description is truly random noise with zero identifiable signal.
+2. A specific guess is ALWAYS better than "other". If you're uncertain between two categories, pick the more likely one.
+3. Bank descriptions are often garbled — decode them using the patterns below before giving up.
+4. Return ONLY valid JSON — no markdown, no explanation, no extra text.
+
+BANK DESCRIPTION DECODING GUIDE:
+- "SQ *<NAME>" = Square POS payment → categorize by the merchant name after SQ*
+- "TST* <NAME>" = Toast POS (restaurant) → dining
+- "SP <NAME>" = Shopify merchant → categorize by merchant name
+- "PP*<NAME>" or "PAYPAL *<NAME>" = PayPal payment → categorize by merchant name
+- "AMZN*" or "AMAZON*" = Amazon purchase → shopping
+- "WHOLEFDS" or "WFM" = Whole Foods → groceries
+- "ORIG CO NAME:<NAME>" or "ACH DEBIT <NAME>" = bill payment → categorize by company name
+- "ONLINE PMT" / "ONLINE PAYMENT" / "AUTOPAY" = credit card/bill payment → transfer
+- "DIRECT DEPOSIT" / "ACH CREDIT" / "PAYROLL" = income
+- "ATM WITHDRAWAL" / "ATM CASH" = cash withdrawal → other (miscellaneous)
+- "INTEREST EARNED" / "INTEREST PAYMENT" = income (investment)
+- "CHECK #<number>" = check payment → categorize by any available context or transfer
+- "RECURRING" / "RECUR" in description = likely a subscription
+- "VZWRLSS" = Verizon Wireless → housing (phone)
+- "COMCAST" / "XFINITY" = internet → housing
+- "NFLX" = Netflix → subscriptions
+- "SPOTIFY" = Spotify → subscriptions
+- Numbers/IDs at end of merchant name are location codes — ignore them for categorization`;
 
 export function buildCategorizationPrompt(transactions: Pick<Transaction, 'id' | 'description' | 'amount' | 'type'>[]): string {
-  const categoryList = CATEGORIES.map(c =>
-    `${c.id} (${c.name}): ${c.subcategories.map(s => s.id).join(', ')}`
-  ).join('\n');
+  const categoryGuide = [
+    'income → salary/wages, direct deposits, ACH credits from employers, tax refunds, investment dividends',
+    'housing → rent, mortgage payments, electric/gas/water utilities, internet, phone bills, home insurance, repairs',
+    'groceries → supermarkets, wholesale clubs, specialty food stores, food delivery services (Instacart)',
+    'dining → restaurants, coffee shops, fast food, food delivery apps (DoorDash/UberEats/Grubhub), bars',
+    'transportation → gas stations, Uber/Lyft rideshare, auto insurance, car maintenance, parking, public transit, tolls',
+    'shopping → Amazon, retail stores, clothing, electronics, home goods, online marketplaces',
+    'health → doctor/dentist visits, hospitals, pharmacies (CVS/Walgreens), gym memberships, health insurance, therapy',
+    'entertainment → movies, concerts, sports events, video games, recreational activities',
+    'travel → flights, hotels, Airbnb, car rentals, travel booking sites',
+    'subscriptions → streaming services (Netflix/Spotify/Hulu), software (Adobe/Microsoft), news, memberships',
+    'savings → brokerage transfers, 401k contributions, savings account deposits, investment purchases',
+    'education → tuition, online courses, textbooks, tutoring',
+    'childcare → daycare, babysitting, kids activities, children clothing/supplies',
+    'pets → pet food, vet bills, grooming, pet supplies',
+    'transfer → credit card payments, bank-to-bank transfers, Venmo/Zelle/CashApp, PayPal transfers',
+    'other → ONLY for truly unidentifiable transactions with zero useful signal',
+  ].join('\n');
 
   const txList = transactions.map(t =>
     `{"id":"${t.id}","desc":"${t.description.replace(/"/g, "'")}","amount":${t.amount},"type":"${t.type}"}`
   ).join('\n');
 
-  return `Categorize these ${transactions.length} financial transactions.
+  return `Categorize these ${transactions.length} financial transactions. Use the category guide to pick the BEST match.
 
-CATEGORIES AVAILABLE:
-${categoryList}
+CATEGORY GUIDE (categoryId → what belongs here):
+${categoryGuide}
+
+VALID CATEGORY IDs: ${CATEGORIES.map(c => c.id).join(', ')}
+
+SUBCATEGORY IDs by category:
+${CATEGORIES.map(c => `  ${c.id}: ${c.subcategories.map(s => s.id).join(', ')}`).join('\n')}
 
 TRANSACTIONS:
 ${txList}
 
-Return a JSON object with this exact shape:
+IMPORTANT:
+- Decode garbled bank descriptions (SQ*, TST*, AMZN*, VZWRLSS, etc.) before categorizing
+- "other" should be used for fewer than 5% of transactions — always try harder first
+- For credit transactions (type=credit), prefer income or transfer categories
+- Return every transaction id — do not skip any
+
+Return a JSON object:
 {
   "results": [
     {
       "id": "<same transaction id>",
-      "categoryId": "<category id from list above>",
-      "subcategoryId": "<subcategory id, optional>",
-      "normalizedMerchant": "<clean merchant name, e.g. 'Whole Foods' not 'WHOLE FOODS MKT #123'>",
+      "categoryId": "<category id>",
+      "subcategoryId": "<subcategory id>",
+      "normalizedMerchant": "<clean readable merchant name, e.g. 'Whole Foods' not 'WHOLEFDS MKT #1532'>",
       "confidence": <0.0 to 1.0>,
-      "tags": ["<optional tags like 'recurring', 'essential', 'impulse', 'subscription'>"]
+      "tags": ["recurring"|"essential"|"subscription"|"impulse"|"transfer" — only applicable ones]
     }
   ]
 }`;
