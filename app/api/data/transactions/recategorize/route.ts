@@ -7,8 +7,6 @@ import {
 } from '@/lib/db/postgres';
 import { merchantLookup } from '@/lib/ai/categorizer';
 
-export const maxDuration = 60;
-
 export async function POST(req: NextRequest) {
   let userId: string;
   try {
