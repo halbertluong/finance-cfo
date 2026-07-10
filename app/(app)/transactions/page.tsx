@@ -8,7 +8,7 @@ import { Transaction } from '@/models/types';
 import { format } from 'date-fns';
 import { Search, ChevronLeft, ChevronRight, Check, X, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import { merchantLookup, splitIntoBatches } from '@/lib/ai/categorizer';
+import { splitIntoBatches } from '@/lib/ai/categorizer';
 
 const PAGE_SIZE = 50;
 
@@ -65,76 +65,77 @@ export default function TransactionsPage() {
 
   const handleRecategorize = async () => {
     setRecategorizing(true);
-    setRecatProgress('Running merchant lookup…');
+    setRecatProgress('Running merchant lookup on server…');
     setRecatResult(null);
 
     try {
-      const eligible = transactions.filter((t) => t.isManualOverride !== true);
-      const total = eligible.length;
+      const total = transactions.filter((t) => !t.isManualOverride).length;
 
-      // Phase 1: merchant lookup (runs in the browser, instant)
-      type Update = { id: string; categoryId: string; subcategoryId?: string; normalizedMerchant: string; confidence: number };
-      const lookupUpdates: Update[] = [];
-      const needsAI: Transaction[] = [];
-
-      for (const tx of eligible) {
-        const result = merchantLookup(tx.description);
-        if (result) {
-          lookupUpdates.push({ id: tx.id, categoryId: result.categoryId, subcategoryId: result.subcategoryId, normalizedMerchant: result.normalizedMerchant, confidence: result.confidence });
-        } else {
-          needsAI.push(tx);
-        }
+      // Phase 1: server-side merchant lookup — one request, updates by description
+      const lookupRes = await fetch('/api/data/transactions/recategorize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (!lookupRes.ok) {
+        const d = await lookupRes.json();
+        throw new Error(d.error ?? 'Lookup failed');
       }
+      const { updated: lookupUpdated, unmatchedDescriptions = [] } = await lookupRes.json() as { updated: number; unmatchedDescriptions: string[] };
 
-      setRecatProgress(`Saving ${lookupUpdates.length} matched transactions…`);
+      setRecatProgress(`Matched ${lookupUpdated} transactions. AI categorizing ${unmatchedDescriptions.length} unique merchants…`);
 
-      // Save lookup results
-      if (lookupUpdates.length > 0) {
-        const res = await fetch('/api/data/transactions/recategorize', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ updates: lookupUpdates }),
-        });
-        if (!res.ok) {
-          const d = await res.json();
-          throw new Error(d.error ?? 'Save failed');
-        }
-      }
-
-      // Phase 2: AI categorization for unmatched transactions
+      // Phase 2: AI on unique unmatched descriptions (far fewer than total transactions)
       let aiCount = 0;
-      if (needsAI.length > 0) {
-        const batches = splitIntoBatches(needsAI, 20);
+      if (unmatchedDescriptions.length > 0) {
+        // Build map of description → representative transaction for amount/type context
+        const descToTx = new Map<string, Transaction>();
+        for (const tx of transactions) {
+          if (!descToTx.has(tx.description)) descToTx.set(tx.description, tx);
+        }
+
+        const batches = splitIntoBatches(unmatchedDescriptions, 20);
         for (let i = 0; i < batches.length; i++) {
-          setRecatProgress(`AI categorizing batch ${i + 1}/${batches.length} (${needsAI.length} transactions)…`);
+          setRecatProgress(`AI: batch ${i + 1}/${batches.length} (${unmatchedDescriptions.length} unique merchants)…`);
           const batch = batches[i];
           try {
             const catRes = await fetch('/api/categorize', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ transactions: batch.map((t) => ({ id: t.id, description: t.description, amount: t.amount, type: t.type })) }),
+              body: JSON.stringify({
+                transactions: batch.map((desc: string) => {
+                  const tx = descToTx.get(desc);
+                  return { id: desc, description: desc, amount: tx?.amount ?? 0, type: tx?.type ?? 'debit' };
+                }),
+              }),
             });
             if (!catRes.ok) continue;
             const catData = await catRes.json();
-            const aiUpdates: Update[] = (catData.results ?? []).map((r: { id: string; categoryId: string; subcategoryId?: string; normalizedMerchant: string; confidence: number }) => ({
-              id: r.id, categoryId: r.categoryId, subcategoryId: r.subcategoryId,
-              normalizedMerchant: r.normalizedMerchant, confidence: r.confidence,
+            const descUpdates = (catData.results ?? []).map((r: { id: string; categoryId: string; subcategoryId?: string; normalizedMerchant: string; confidence: number }) => ({
+              description: r.id,
+              categoryId: r.categoryId,
+              subcategoryId: r.subcategoryId,
+              normalizedMerchant: r.normalizedMerchant,
+              confidence: r.confidence,
             }));
-            if (aiUpdates.length > 0) {
-              await fetch('/api/data/transactions/recategorize', {
+            if (descUpdates.length > 0) {
+              const saveRes = await fetch('/api/data/transactions/recategorize', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ updates: aiUpdates }),
+                body: JSON.stringify({ descriptionUpdates: descUpdates }),
               });
-              aiCount += aiUpdates.length;
+              if (saveRes.ok) {
+                const { saved } = await saveRes.json() as { saved: number };
+                aiCount += saved ?? 0;
+              }
             }
           } catch {
-            // Skip failed batches, partial progress is fine
+            // Skip failed batches
           }
         }
       }
 
-      setRecatResult({ updated: lookupUpdates.length + aiCount, total });
+      setRecatResult({ updated: lookupUpdated + aiCount, total });
     } catch (e) {
       setRecatResult({ updated: 0, total: transactions.length, error: String(e) });
     } finally {

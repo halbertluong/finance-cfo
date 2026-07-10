@@ -138,13 +138,14 @@ export async function dbBulkUpdateTransactionGroup(
 export async function dbBulkRecategorize(
   userId: string,
   updates: { id: string; categoryId: string; subcategoryId?: string; normalizedMerchant: string; confidence: number }[]
-): Promise<void> {
-  if (updates.length === 0) return;
+): Promise<number> {
+  if (updates.length === 0) return 0;
   const db = sql();
   const CHUNK = 50;
+  let total = 0;
   for (let i = 0; i < updates.length; i += CHUNK) {
     const chunk = updates.slice(i, i + CHUNK);
-    await Promise.all(chunk.map((u) => db`
+    const results = await Promise.all(chunk.map((u) => db`
       UPDATE transactions
       SET
         category_id         = ${u.categoryId},
@@ -153,8 +154,49 @@ export async function dbBulkRecategorize(
         confidence          = ${u.confidence}
       WHERE id = ${u.id}
         AND user_id = ${userId}
+        AND is_manual_override = false
+      RETURNING id
     `));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    total += results.reduce((sum: number, r: any[]) => sum + r.length, 0);
   }
+  return total;
+}
+
+export async function dbGetDistinctNonManualDescriptions(userId: string): Promise<string[]> {
+  const db = sql();
+  const rows = await db`
+    SELECT DISTINCT description
+    FROM transactions
+    WHERE user_id = ${userId} AND is_manual_override = false
+    ORDER BY description
+  `;
+  return rows.map((r) => r.description as string);
+}
+
+export async function dbRecategorizeByDescription(
+  userId: string,
+  updates: { description: string; categoryId: string; subcategoryId?: string; normalizedMerchant: string; confidence: number }[]
+): Promise<number> {
+  if (updates.length === 0) return 0;
+  const db = sql();
+  let total = 0;
+  for (const u of updates) {
+    const result = await db`
+      UPDATE transactions
+      SET
+        category_id         = ${u.categoryId},
+        subcategory_id      = ${u.subcategoryId ?? null},
+        normalized_merchant = ${u.normalizedMerchant},
+        confidence          = ${u.confidence}
+      WHERE user_id    = ${userId}
+        AND description = ${u.description}
+        AND is_manual_override = false
+      RETURNING id
+    `;
+    total += result.length;
+  }
+  return total;
 }
 
 // ─── Accounts ────────────────────────────────────────────────────────────────

@@ -379,6 +379,47 @@ const MERCHANT_LOOKUP: Record<string, { categoryId: string; subcategoryId: strin
   'xbox': { categoryId: 'entertainment', subcategoryId: 'entertainment-games', merchant: 'Xbox', tags: ['gaming', 'subscription'] },
   'playstation': { categoryId: 'entertainment', subcategoryId: 'entertainment-games', merchant: 'PlayStation', tags: ['gaming', 'subscription'] },
   'nintendo': { categoryId: 'entertainment', subcategoryId: 'entertainment-games', merchant: 'Nintendo', tags: ['gaming'] },
+
+  // ── Portland / Pacific Northwest ─────────────────────────────────────────────
+  'new seasons': { categoryId: 'groceries', subcategoryId: 'groceries-supermarket', merchant: 'New Seasons Market', tags: ['grocery', 'organic'] },
+  'portland general': { categoryId: 'housing', subcategoryId: 'housing-utilities', merchant: 'Portland General Electric', tags: ['electric', 'utility', 'recurring'] },
+  'multnomah athletic': { categoryId: 'health', subcategoryId: 'health-fitness', merchant: 'Multnomah Athletic Club', tags: ['gym', 'subscription', 'recurring'] },
+  'northwest natural': { categoryId: 'housing', subcategoryId: 'housing-utilities', merchant: 'NW Natural Gas', tags: ['gas', 'utility', 'recurring'] },
+  'vacatia': { categoryId: 'travel', subcategoryId: 'travel-hotels', merchant: 'Vacatia', tags: ['travel', 'lodging', 'vacation-rental'] },
+  'cenlar': { categoryId: 'housing', subcategoryId: 'housing-rent', merchant: 'Cenlar Mortgage', tags: ['housing', 'mortgage', 'recurring'] },
+  'city of portland': { categoryId: 'housing', subcategoryId: 'housing-utilities', merchant: 'City of Portland', tags: ['utility', 'recurring'] },
+  'portland water': { categoryId: 'housing', subcategoryId: 'housing-utilities', merchant: 'Portland Water Bureau', tags: ['utility', 'water', 'recurring'] },
+  'trimet': { categoryId: 'transportation', subcategoryId: 'transport-public', merchant: 'TriMet', tags: ['transit', 'recurring'] },
+  'volvo financial': { categoryId: 'transportation', subcategoryId: 'transport-auto', merchant: 'Volvo Financial', tags: ['auto', 'loan', 'recurring'] },
+  'volvo car': { categoryId: 'transportation', subcategoryId: 'transport-auto', merchant: 'Volvo', tags: ['auto'] },
+
+  // ── Banks & Credit Card Payments ──────────────────────────────────────────────
+  'american express': { categoryId: 'transfer', subcategoryId: 'transfer-payment', merchant: 'American Express', tags: ['transfer', 'payment', 'credit-card'] },
+  'chase credit': { categoryId: 'transfer', subcategoryId: 'transfer-payment', merchant: 'Chase', tags: ['transfer', 'payment', 'credit-card'] },
+  'automatic payment': { categoryId: 'transfer', subcategoryId: 'transfer-payment', merchant: 'Automatic Payment', tags: ['transfer', 'payment'] },
+  'bill payment': { categoryId: 'transfer', subcategoryId: 'transfer-payment', merchant: 'Bill Payment', tags: ['transfer', 'payment'] },
+  'online payment': { categoryId: 'transfer', subcategoryId: 'transfer-payment', merchant: 'Online Payment', tags: ['transfer', 'payment'] },
+  'online bill pay': { categoryId: 'transfer', subcategoryId: 'transfer-payment', merchant: 'Online Bill Pay', tags: ['transfer', 'payment'] },
+  'truist': { categoryId: 'transfer', subcategoryId: 'transfer-internal', merchant: 'Truist Bank', tags: ['transfer', 'bank'] },
+  'bank of america': { categoryId: 'transfer', subcategoryId: 'transfer-internal', merchant: 'Bank of America', tags: ['transfer', 'bank'] },
+
+  // ── Income / Payroll ──────────────────────────────────────────────────────────
+  'accenture': { categoryId: 'income', subcategoryId: 'income-salary', merchant: 'Accenture', tags: ['income', 'payroll', 'recurring'] },
+  'gusto': { categoryId: 'income', subcategoryId: 'income-salary', merchant: 'Gusto Payroll', tags: ['income', 'payroll', 'recurring'] },
+  'adp ': { categoryId: 'income', subcategoryId: 'income-salary', merchant: 'ADP Payroll', tags: ['income', 'payroll', 'recurring'] },
+  'paychex': { categoryId: 'income', subcategoryId: 'income-salary', merchant: 'Paychex', tags: ['income', 'payroll', 'recurring'] },
+  'square payroll': { categoryId: 'income', subcategoryId: 'income-salary', merchant: 'Square Payroll', tags: ['income', 'payroll', 'recurring'] },
+  'online deposit': { categoryId: 'income', subcategoryId: 'income-other', merchant: 'Online Deposit', tags: ['income', 'deposit'] },
+
+  // ── International Airlines ────────────────────────────────────────────────────
+  'air canada': { categoryId: 'travel', subcategoryId: 'travel-flights', merchant: 'Air Canada', tags: ['travel', 'flight'] },
+  'virgin australia': { categoryId: 'travel', subcategoryId: 'travel-flights', merchant: 'Virgin Australia', tags: ['travel', 'flight'] },
+  'british airways': { categoryId: 'travel', subcategoryId: 'travel-flights', merchant: 'British Airways', tags: ['travel', 'flight'] },
+  'lufthansa': { categoryId: 'travel', subcategoryId: 'travel-flights', merchant: 'Lufthansa', tags: ['travel', 'flight'] },
+  'alaska airlines': { categoryId: 'travel', subcategoryId: 'travel-flights', merchant: 'Alaska Airlines', tags: ['travel', 'flight'] },
+
+  // ── Catch-all (must stay at end — matched last) ───────────────────────────────
+  'apple': { categoryId: 'shopping', subcategoryId: 'shopping-electronics', merchant: 'Apple', tags: ['electronics', 'apple'] },
 };
 
 export function merchantLookup(description: string): CategorizationResult | null {
