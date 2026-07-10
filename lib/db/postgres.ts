@@ -52,6 +52,7 @@ export async function dbSaveTransactions(userId: string, txs: Transaction[]): Pr
       ON CONFLICT (id) DO UPDATE SET
         category_id = CASE WHEN transactions.is_manual_override THEN transactions.category_id ELSE EXCLUDED.category_id END,
         subcategory_id = EXCLUDED.subcategory_id,
+        normalized_merchant = EXCLUDED.normalized_merchant,
         account_id = EXCLUDED.account_id,
         tags = EXCLUDED.tags,
         confidence = EXCLUDED.confidence,
