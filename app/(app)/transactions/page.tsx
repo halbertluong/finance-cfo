@@ -6,7 +6,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { getCategoryColor, getCategoryIcon, getCategoryName, CATEGORIES } from '@/lib/categories';
 import { Transaction } from '@/models/types';
 import { format } from 'date-fns';
-import { Search, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Check, X, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 const PAGE_SIZE = 50;
@@ -49,7 +49,7 @@ function CategoryPicker({ current, onSelect, onClose }: {
 }
 
 export default function TransactionsPage() {
-  const { transactions, updateCategory, isLoading } = useAppData();
+  const { transactions, updateCategory, isLoading, refresh } = useAppData();
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'debit' | 'credit'>('all');
@@ -58,6 +58,24 @@ export default function TransactionsPage() {
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkCat, setBulkCat] = useState(false);
+  const [recategorizing, setRecategorizing] = useState(false);
+  const [recatResult, setRecatResult] = useState<{ updated: number; total: number } | null>(null);
+
+  const handleRecategorize = async () => {
+    setRecategorizing(true);
+    setRecatResult(null);
+    try {
+      const res = await fetch('/api/data/transactions/recategorize', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed');
+      setRecatResult({ updated: data.updated, total: data.total });
+      await refresh();
+    } catch (e) {
+      console.error('Recategorize failed:', e);
+    } finally {
+      setRecategorizing(false);
+    }
+  };
 
   const months = useMemo(() => {
     const keys = new Set<string>();
@@ -134,10 +152,33 @@ export default function TransactionsPage() {
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Transactions</h1>
           <p className="text-gray-400 text-sm mt-0.5">{filtered.length} of {transactions.length} transactions</p>
         </div>
-        <Link href="/?import=true" className="text-sm text-green-700 border border-green-200 bg-green-50 hover:bg-green-100 px-3 py-2 rounded-xl transition-all">
-          + Import
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRecategorize}
+            disabled={recategorizing}
+            className="flex items-center gap-1.5 text-sm text-violet-700 border border-violet-200 bg-violet-50 hover:bg-violet-100 px-3 py-2 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Re-categorize all transactions using updated rules"
+          >
+            {recategorizing ? (
+              <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
+            {recategorizing ? 'Categorizing…' : 'Re-categorize'}
+          </button>
+          <Link href="/?import=true" className="text-sm text-green-700 border border-green-200 bg-green-50 hover:bg-green-100 px-3 py-2 rounded-xl transition-all">
+            + Import
+          </Link>
+        </div>
       </div>
+      {recatResult && (
+        <div className="mb-4 px-4 py-2.5 bg-violet-50 border border-violet-200 rounded-xl text-sm text-violet-700 flex items-center justify-between">
+          <span>Updated {recatResult.updated} of {recatResult.total} transactions (manual overrides preserved)</span>
+          <button onClick={() => setRecatResult(null)} className="text-violet-400 hover:text-violet-600 ml-4">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Filter bar */}
       <div className="flex flex-wrap gap-2 sm:gap-3 mb-5">
