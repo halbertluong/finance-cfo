@@ -1,6 +1,8 @@
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4, v5 as uuidv5 } from 'uuid';
 import { parse, isValid } from 'date-fns';
 import { RawTransaction, Transaction, ColumnMapping } from '@/models/types';
+
+const TX_NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
 
 const DATE_FORMATS = [
   'MM/dd/yyyy',
@@ -79,7 +81,19 @@ export function normalizeTransactions(
   mapping: ColumnMapping
 ): Transaction[] {
   const raws = rowsToRawTransactions(rows, mapping);
-  return raws.map(rawToTransaction).filter(Boolean) as Transaction[];
+  const occurrenceCount = new Map<string, number>();
+
+  return raws.map((raw) => {
+    const tx = rawToTransaction(raw);
+    if (!tx) return null;
+
+    const dateStr = tx.date.toISOString().split('T')[0];
+    const baseKey = `${dateStr}|${tx.description}|${tx.amount}|${tx.type}`;
+    const occurrence = occurrenceCount.get(baseKey) ?? 0;
+    occurrenceCount.set(baseKey, occurrence + 1);
+
+    return { ...tx, id: uuidv5(`${baseKey}|${occurrence}`, TX_NAMESPACE) };
+  }).filter(Boolean) as Transaction[];
 }
 
 // Auto-detect column mapping from headers

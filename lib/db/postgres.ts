@@ -50,13 +50,13 @@ export async function dbSaveTransactions(userId: string, txs: Transaction[]): Pr
         }))
       )}
       ON CONFLICT (id) DO UPDATE SET
-        category_id = EXCLUDED.category_id,
+        category_id = CASE WHEN transactions.is_manual_override THEN transactions.category_id ELSE EXCLUDED.category_id END,
         subcategory_id = EXCLUDED.subcategory_id,
         account_id = EXCLUDED.account_id,
         tags = EXCLUDED.tags,
         confidence = EXCLUDED.confidence,
-        is_manual_override = EXCLUDED.is_manual_override,
-        group_id = EXCLUDED.group_id
+        is_manual_override = transactions.is_manual_override,
+        group_id = COALESCE(transactions.group_id, EXCLUDED.group_id)
     `;
   }
 }
