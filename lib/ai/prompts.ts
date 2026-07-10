@@ -4,12 +4,15 @@ import { Transaction } from '@/models/types';
 export const CATEGORIZATION_SYSTEM_PROMPT = `You are an expert personal finance transaction categorizer.
 Your job is to analyze bank/credit card transactions and assign them to the correct category.
 You must return ONLY valid JSON — no markdown, no explanation, no extra text.
-Be confident with well-known merchants. Use the provided category list strictly.`;
+Be confident with well-known merchants. Use the provided category list strictly.
+CRITICAL: Only use "other" as an absolute last resort when you truly cannot determine anything about the merchant.
+Most transactions can be categorized — restaurants go to "dining", stores go to "shopping", utilities go to "housing", etc.`;
 
 export function buildCategorizationPrompt(transactions: Pick<Transaction, 'id' | 'description' | 'amount' | 'type'>[]): string {
   const categoryList = CATEGORIES.map(c =>
-    `${c.id} (${c.name}): ${c.subcategories.map(s => s.id).join(', ')}`
-  ).join('\n');
+    `${c.id} (${c.name}):\n` +
+    c.subcategories.map(s => `  - ${s.id} → ${s.name}`).join('\n')
+  ).join('\n\n');
 
   const txList = transactions.map(t =>
     `{"id":"${t.id}","desc":"${t.description.replace(/"/g, "'")}","amount":${t.amount},"type":"${t.type}"}`
@@ -20,6 +23,18 @@ export function buildCategorizationPrompt(transactions: Pick<Transaction, 'id' |
 CATEGORIES AVAILABLE:
 ${categoryList}
 
+RULES:
+- "other" is a LAST RESORT — only use it if you truly cannot determine anything about the merchant
+- Any restaurant, cafe, bar, or food place → dining
+- Any grocery store, supermarket, or food delivery → groceries or dining-delivery
+- Any gas station, auto shop, rideshare, or toll → transportation
+- Any utility bill (electric, gas, water, internet, trash) → housing
+- Any streaming, software, gym, or phone bill → subscriptions or health
+- Any department store, clothing, or online retailer → shopping
+- Any bank transfer, Venmo, Zelle, or credit card payment → transfer
+- Credit/income transactions with "deposit", "payroll", or employer name → income
+- When unsure between two categories, pick the more specific one (not "other")
+
 TRANSACTIONS:
 ${txList}
 
@@ -29,7 +44,7 @@ Return a JSON object with this exact shape:
     {
       "id": "<same transaction id>",
       "categoryId": "<category id from list above>",
-      "subcategoryId": "<subcategory id, optional>",
+      "subcategoryId": "<subcategory id from the list above>",
       "normalizedMerchant": "<clean merchant name, e.g. 'Whole Foods' not 'WHOLE FOODS MKT #123'>",
       "confidence": <0.0 to 1.0>,
       "tags": ["<optional tags like 'recurring', 'essential', 'impulse', 'subscription'>"]
@@ -86,7 +101,7 @@ Return ONLY valid JSON — no markdown, no explanation.`;
 
 export function buildMerchantReviewPrompt(merchants: MerchantReviewInput[]): string {
   const categoryList = CATEGORIES.map(c =>
-    `${c.id} (${c.name}): ${c.subcategories.map(s => s.id).join(', ')}`
+    `${c.id} (${c.name}): ${c.subcategories.map(s => `${s.id} (${s.name})`).join(', ')}`
   ).join('\n');
 
   const merchantList = merchants.map(m =>
