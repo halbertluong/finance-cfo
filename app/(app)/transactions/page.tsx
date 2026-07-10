@@ -8,6 +8,7 @@ import { Transaction } from '@/models/types';
 import { format } from 'date-fns';
 import { Search, ChevronLeft, ChevronRight, Check, X, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { merchantLookup, splitIntoBatches } from '@/lib/ai/categorizer';
 
 const PAGE_SIZE = 50;
 
@@ -59,24 +60,87 @@ export default function TransactionsPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkCat, setBulkCat] = useState(false);
   const [recategorizing, setRecategorizing] = useState(false);
+  const [recatProgress, setRecatProgress] = useState('');
   const [recatResult, setRecatResult] = useState<{ updated: number; total: number; error?: string } | null>(null);
 
   const handleRecategorize = async () => {
     setRecategorizing(true);
+    setRecatProgress('Running merchant lookup…');
     setRecatResult(null);
+
     try {
-      const res = await fetch('/api/data/transactions/recategorize', { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok) {
-        setRecatResult({ updated: 0, total: 0, error: data.error ?? 'Recategorization failed' });
-      } else {
-        setRecatResult({ updated: data.updated, total: data.total });
+      const eligible = transactions.filter((t) => t.isManualOverride !== true);
+      const total = eligible.length;
+
+      // Phase 1: merchant lookup (runs in the browser, instant)
+      type Update = { id: string; categoryId: string; subcategoryId?: string; normalizedMerchant: string; confidence: number };
+      const lookupUpdates: Update[] = [];
+      const needsAI: Transaction[] = [];
+
+      for (const tx of eligible) {
+        const result = merchantLookup(tx.description);
+        if (result) {
+          lookupUpdates.push({ id: tx.id, categoryId: result.categoryId, subcategoryId: result.subcategoryId, normalizedMerchant: result.normalizedMerchant, confidence: result.confidence });
+        } else {
+          needsAI.push(tx);
+        }
       }
+
+      setRecatProgress(`Saving ${lookupUpdates.length} matched transactions…`);
+
+      // Save lookup results
+      if (lookupUpdates.length > 0) {
+        const res = await fetch('/api/data/transactions/recategorize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ updates: lookupUpdates }),
+        });
+        if (!res.ok) {
+          const d = await res.json();
+          throw new Error(d.error ?? 'Save failed');
+        }
+      }
+
+      // Phase 2: AI categorization for unmatched transactions
+      let aiCount = 0;
+      if (needsAI.length > 0) {
+        const batches = splitIntoBatches(needsAI, 20);
+        for (let i = 0; i < batches.length; i++) {
+          setRecatProgress(`AI categorizing batch ${i + 1}/${batches.length} (${needsAI.length} transactions)…`);
+          const batch = batches[i];
+          try {
+            const catRes = await fetch('/api/categorize', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ transactions: batch.map((t) => ({ id: t.id, description: t.description, amount: t.amount, type: t.type })) }),
+            });
+            if (!catRes.ok) continue;
+            const catData = await catRes.json();
+            const aiUpdates: Update[] = (catData.results ?? []).map((r: { id: string; categoryId: string; subcategoryId?: string; normalizedMerchant: string; confidence: number }) => ({
+              id: r.id, categoryId: r.categoryId, subcategoryId: r.subcategoryId,
+              normalizedMerchant: r.normalizedMerchant, confidence: r.confidence,
+            }));
+            if (aiUpdates.length > 0) {
+              await fetch('/api/data/transactions/recategorize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ updates: aiUpdates }),
+              });
+              aiCount += aiUpdates.length;
+            }
+          } catch {
+            // Skip failed batches, partial progress is fine
+          }
+        }
+      }
+
+      setRecatResult({ updated: lookupUpdates.length + aiCount, total });
     } catch (e) {
-      setRecatResult({ updated: 0, total: 0, error: String(e) });
+      setRecatResult({ updated: 0, total: transactions.length, error: String(e) });
     } finally {
       await refresh();
       setRecategorizing(false);
+      setRecatProgress('');
     }
   };
 
@@ -167,7 +231,7 @@ export default function TransactionsPage() {
             ) : (
               <Sparkles className="w-4 h-4" />
             )}
-            {recategorizing ? 'Categorizing…' : 'Re-categorize'}
+            {recategorizing ? (recatProgress || 'Working…') : 'Re-categorize'}
           </button>
           <Link href="/?import=true" className="text-sm text-green-700 border border-green-200 bg-green-50 hover:bg-green-100 px-3 py-2 rounded-xl transition-all">
             + Import
