@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { requireUserId } from '@/lib/auth';
-import { dbLoadTransactions, dbSaveTransactions } from '@/lib/db/postgres';
+import { dbLoadTransactions, dbBulkRecategorize } from '@/lib/db/postgres';
 import { merchantLookup, splitIntoBatches } from '@/lib/ai/categorizer';
 import Anthropic from '@anthropic-ai/sdk';
 import { buildCategorizationPrompt, CATEGORIZATION_SYSTEM_PROMPT } from '@/lib/ai/prompts';
-import { Transaction } from '@/models/types';
 import { z } from 'zod';
+
+export const maxDuration = 300;
 
 const client = new Anthropic();
 
@@ -19,6 +20,15 @@ const ResponseSchema = z.object({
     tags: z.array(z.string()),
   })),
 });
+
+type CatUpdate = {
+  id: string;
+  categoryId: string;
+  subcategoryId?: string;
+  normalizedMerchant: string;
+  confidence: number;
+  tags: string[];
+};
 
 export async function POST() {
   let userId: string;
@@ -36,14 +46,14 @@ export async function POST() {
       return NextResponse.json({ updated: 0, lookupMatched: 0, aiCategorized: 0, total: allTransactions.length });
     }
 
-    const lookupMatched: Transaction[] = [];
-    const needsAI: Transaction[] = [];
+    const lookupUpdates: CatUpdate[] = [];
+    const needsAI: typeof toRecategorize = [];
 
     for (const tx of toRecategorize) {
       const result = merchantLookup(tx.description);
       if (result) {
-        lookupMatched.push({
-          ...tx,
+        lookupUpdates.push({
+          id: tx.id,
           categoryId: result.categoryId,
           subcategoryId: result.subcategoryId,
           normalizedMerchant: result.normalizedMerchant,
@@ -55,9 +65,13 @@ export async function POST() {
       }
     }
 
-    const aiUpdated: Transaction[] = [];
+    // Save lookup results immediately — fast and safe
+    await dbBulkRecategorize(userId, lookupUpdates);
+
+    // AI categorization in batches, saving after each batch
+    let aiCount = 0;
     if (needsAI.length > 0) {
-      const batches = splitIntoBatches(needsAI, 25);
+      const batches = splitIntoBatches(needsAI, 20);
       for (const batch of batches) {
         try {
           const prompt = buildCategorizationPrompt(
@@ -71,36 +85,30 @@ export async function POST() {
           });
           const text = message.content[0].type === 'text' ? message.content[0].text : '';
           const jsonMatch = text.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const validated = ResponseSchema.parse(JSON.parse(jsonMatch[0]));
-            const resultMap = Object.fromEntries(validated.results.map((r) => [r.id, r]));
-            for (const tx of batch) {
-              const r = resultMap[tx.id];
-              aiUpdated.push(r ? {
-                ...tx,
-                categoryId: r.categoryId,
-                subcategoryId: r.subcategoryId,
-                normalizedMerchant: r.normalizedMerchant || tx.description,
-                confidence: r.confidence,
-                tags: r.tags,
-              } : tx);
-            }
-          } else {
-            aiUpdated.push(...batch);
-          }
+          if (!jsonMatch) continue;
+
+          const validated = ResponseSchema.parse(JSON.parse(jsonMatch[0]));
+          const batchUpdates: CatUpdate[] = validated.results.map((r) => ({
+            id: r.id,
+            categoryId: r.categoryId,
+            subcategoryId: r.subcategoryId,
+            normalizedMerchant: r.normalizedMerchant,
+            confidence: r.confidence,
+            tags: r.tags,
+          }));
+
+          await dbBulkRecategorize(userId, batchUpdates);
+          aiCount += batchUpdates.length;
         } catch {
-          aiUpdated.push(...batch);
+          // Skip failed batches — partial progress is better than nothing
         }
       }
     }
 
-    const toSave = [...lookupMatched, ...aiUpdated];
-    await dbSaveTransactions(userId, toSave);
-
     return NextResponse.json({
-      updated: toSave.length,
-      lookupMatched: lookupMatched.length,
-      aiCategorized: aiUpdated.length,
+      updated: lookupUpdates.length + aiCount,
+      lookupMatched: lookupUpdates.length,
+      aiCategorized: aiCount,
       total: allTransactions.length,
     });
   } catch (error) {

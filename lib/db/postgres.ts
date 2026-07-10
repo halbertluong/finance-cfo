@@ -135,6 +135,34 @@ export async function dbBulkUpdateTransactionGroup(
   `;
 }
 
+export async function dbBulkRecategorize(
+  userId: string,
+  updates: { id: string; categoryId: string; subcategoryId?: string; normalizedMerchant: string; confidence: number; tags: string[] }[]
+): Promise<void> {
+  if (updates.length === 0) return;
+  const db = sql();
+  const CHUNK = 50;
+  for (let i = 0; i < updates.length; i += CHUNK) {
+    const chunk = updates.slice(i, i + CHUNK);
+    await db.begin(async (tx) => {
+      for (const u of chunk) {
+        await tx`
+          UPDATE transactions
+          SET
+            category_id         = ${u.categoryId},
+            subcategory_id      = ${u.subcategoryId ?? null},
+            normalized_merchant = ${u.normalizedMerchant},
+            confidence          = ${u.confidence},
+            tags                = ${db.array(u.tags)}
+          WHERE id = ${u.id}
+            AND user_id = ${userId}
+            AND NOT is_manual_override
+        `;
+      }
+    });
+  }
+}
+
 // ─── Accounts ────────────────────────────────────────────────────────────────
 
 export async function dbSaveAccount(userId: string, account: Account): Promise<void> {

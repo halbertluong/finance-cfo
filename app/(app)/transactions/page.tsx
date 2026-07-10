@@ -59,7 +59,7 @@ export default function TransactionsPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkCat, setBulkCat] = useState(false);
   const [recategorizing, setRecategorizing] = useState(false);
-  const [recatResult, setRecatResult] = useState<{ updated: number; total: number } | null>(null);
+  const [recatResult, setRecatResult] = useState<{ updated: number; total: number; error?: string } | null>(null);
 
   const handleRecategorize = async () => {
     setRecategorizing(true);
@@ -67,12 +67,15 @@ export default function TransactionsPage() {
     try {
       const res = await fetch('/api/data/transactions/recategorize', { method: 'POST' });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed');
-      setRecatResult({ updated: data.updated, total: data.total });
-      await refresh();
+      if (!res.ok) {
+        setRecatResult({ updated: 0, total: 0, error: data.error ?? 'Recategorization failed' });
+      } else {
+        setRecatResult({ updated: data.updated, total: data.total });
+      }
     } catch (e) {
-      console.error('Recategorize failed:', e);
+      setRecatResult({ updated: 0, total: 0, error: String(e) });
     } finally {
+      await refresh();
       setRecategorizing(false);
     }
   };
@@ -172,9 +175,13 @@ export default function TransactionsPage() {
         </div>
       </div>
       {recatResult && (
-        <div className="mb-4 px-4 py-2.5 bg-violet-50 border border-violet-200 rounded-xl text-sm text-violet-700 flex items-center justify-between">
-          <span>Updated {recatResult.updated} of {recatResult.total} transactions (manual overrides preserved)</span>
-          <button onClick={() => setRecatResult(null)} className="text-violet-400 hover:text-violet-600 ml-4">
+        <div className={`mb-4 px-4 py-2.5 border rounded-xl text-sm flex items-center justify-between ${recatResult.error ? 'bg-red-50 border-red-200 text-red-700' : 'bg-violet-50 border-violet-200 text-violet-700'}`}>
+          <span>
+            {recatResult.error
+              ? `Error: ${recatResult.error}`
+              : `Updated ${recatResult.updated} of ${recatResult.total} transactions (manual overrides preserved)`}
+          </span>
+          <button onClick={() => setRecatResult(null)} className="opacity-60 hover:opacity-100 ml-4">
             <X className="w-4 h-4" />
           </button>
         </div>
