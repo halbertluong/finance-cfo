@@ -58,6 +58,7 @@ export async function dbSaveTransactions(userId: string, txs: Transaction[]): Pr
         confidence = EXCLUDED.confidence,
         is_manual_override = transactions.is_manual_override,
         group_id = COALESCE(transactions.group_id, EXCLUDED.group_id)
+      WHERE transactions.user_id = EXCLUDED.user_id
     `;
   }
 }

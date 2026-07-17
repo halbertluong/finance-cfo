@@ -69,6 +69,8 @@ const MERCHANT_LOOKUP: Record<string, { categoryId: string; subcategoryId: strin
   'texas roadhouse': { categoryId: 'dining', subcategoryId: 'dining-restaurants', merchant: 'Texas Roadhouse', tags: ['restaurant'] },
   "buffalo wild wings": { categoryId: 'dining', subcategoryId: 'dining-restaurants', merchant: 'Buffalo Wild Wings', tags: ['restaurant', 'bars'] },
   'doordash': { categoryId: 'dining', subcategoryId: 'dining-delivery', merchant: 'DoorDash', tags: ['delivery', 'food-delivery'] },
+  'uber eats': { categoryId: 'dining', subcategoryId: 'dining-delivery', merchant: 'Uber Eats', tags: ['delivery', 'food-delivery'] },
+  'uber *eats': { categoryId: 'dining', subcategoryId: 'dining-delivery', merchant: 'Uber Eats', tags: ['delivery', 'food-delivery'] },
   'ubereats': { categoryId: 'dining', subcategoryId: 'dining-delivery', merchant: 'Uber Eats', tags: ['delivery', 'food-delivery'] },
   'grubhub': { categoryId: 'dining', subcategoryId: 'dining-delivery', merchant: 'Grubhub', tags: ['delivery', 'food-delivery'] },
   'instacart': { categoryId: 'groceries', subcategoryId: 'groceries-supermarket', merchant: 'Instacart', tags: ['grocery', 'delivery'] },
@@ -121,6 +123,7 @@ const MERCHANT_LOOKUP: Record<string, { categoryId: string; subcategoryId: strin
   'carmax': { categoryId: 'transportation', subcategoryId: 'transport-auto', merchant: 'CarMax', tags: ['auto'] },
 
   // ── Shopping ─────────────────────────────────────────────────────────────────
+  'amazon prime': { categoryId: 'subscriptions', subcategoryId: 'subs-streaming', merchant: 'Amazon Prime', tags: ['streaming', 'subscription', 'recurring'] },
   'amazon': { categoryId: 'shopping', subcategoryId: 'shopping-amazon', merchant: 'Amazon', tags: ['online', 'amazon'] },
   'amzn': { categoryId: 'shopping', subcategoryId: 'shopping-amazon', merchant: 'Amazon', tags: ['online', 'amazon'] },
   'apple.com': { categoryId: 'shopping', subcategoryId: 'shopping-electronics', merchant: 'Apple', tags: ['electronics'] },
@@ -187,7 +190,6 @@ const MERCHANT_LOOKUP: Record<string, { categoryId: string; subcategoryId: strin
   'paramount': { categoryId: 'subscriptions', subcategoryId: 'subs-streaming', merchant: 'Paramount+', tags: ['streaming', 'subscription', 'recurring'] },
   'sling tv': { categoryId: 'subscriptions', subcategoryId: 'subs-streaming', merchant: 'Sling TV', tags: ['streaming', 'subscription', 'recurring'] },
   'directv': { categoryId: 'subscriptions', subcategoryId: 'subs-streaming', merchant: 'DirecTV', tags: ['streaming', 'subscription', 'recurring'] },
-  'amazon prime': { categoryId: 'subscriptions', subcategoryId: 'subs-streaming', merchant: 'Amazon Prime', tags: ['streaming', 'subscription', 'recurring'] },
   'audible': { categoryId: 'subscriptions', subcategoryId: 'subs-streaming', merchant: 'Audible', tags: ['streaming', 'subscription', 'recurring'] },
   'kindle': { categoryId: 'subscriptions', subcategoryId: 'subs-software', merchant: 'Kindle', tags: ['subscription', 'recurring'] },
   'chatgpt': { categoryId: 'subscriptions', subcategoryId: 'subs-software', merchant: 'ChatGPT', tags: ['software', 'subscription', 'recurring'] },
@@ -215,6 +217,7 @@ const MERCHANT_LOOKUP: Record<string, { categoryId: string; subcategoryId: strin
   'classpass': { categoryId: 'health', subcategoryId: 'health-fitness', merchant: 'ClassPass', tags: ['fitness', 'subscription', 'recurring'] },
   't-mobile': { categoryId: 'subscriptions', subcategoryId: 'subs-membership', merchant: 'T-Mobile', tags: ['phone', 'subscription', 'recurring'] },
   'tmobile': { categoryId: 'subscriptions', subcategoryId: 'subs-membership', merchant: 'T-Mobile', tags: ['phone', 'subscription', 'recurring'] },
+  'verizon fios': { categoryId: 'housing', subcategoryId: 'housing-internet', merchant: 'Verizon Fios', tags: ['internet', 'subscription', 'recurring'] },
   'verizon': { categoryId: 'subscriptions', subcategoryId: 'subs-membership', merchant: 'Verizon', tags: ['phone', 'subscription', 'recurring'] },
   'at&t': { categoryId: 'subscriptions', subcategoryId: 'subs-membership', merchant: 'AT&T', tags: ['phone', 'subscription', 'recurring'] },
   'att ': { categoryId: 'subscriptions', subcategoryId: 'subs-membership', merchant: 'AT&T', tags: ['phone', 'subscription', 'recurring'] },
@@ -223,7 +226,6 @@ const MERCHANT_LOOKUP: Record<string, { categoryId: string; subcategoryId: strin
   'spectrum': { categoryId: 'housing', subcategoryId: 'housing-internet', merchant: 'Spectrum', tags: ['internet', 'cable', 'subscription', 'recurring'] },
   'cox communications': { categoryId: 'housing', subcategoryId: 'housing-internet', merchant: 'Cox', tags: ['internet', 'cable', 'subscription', 'recurring'] },
   'centurylink': { categoryId: 'housing', subcategoryId: 'housing-internet', merchant: 'CenturyLink', tags: ['internet', 'subscription', 'recurring'] },
-  'verizon fios': { categoryId: 'housing', subcategoryId: 'housing-internet', merchant: 'Verizon Fios', tags: ['internet', 'subscription', 'recurring'] },
 
   // ── Travel ───────────────────────────────────────────────────────────────────
   'airbnb': { categoryId: 'travel', subcategoryId: 'travel-hotels', merchant: 'Airbnb', tags: ['travel', 'lodging'] },

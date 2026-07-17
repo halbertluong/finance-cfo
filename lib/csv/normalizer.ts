@@ -30,10 +30,10 @@ function parseAmount(raw: string): { amount: number; type: 'debit' | 'credit' } 
   const cleaned = raw.replace(/[$,\s]/g, '');
   const num = parseFloat(cleaned);
   if (isNaN(num)) throw new Error(`Cannot parse amount: "${raw}"`);
-  // Negative = debit (expense), positive = credit (income)
+  // Negative = debit (expense), positive or zero = credit (income/neutral)
   return {
     amount: Math.abs(num),
-    type: num < 0 ? 'debit' : 'credit',
+    type: num <= 0 ? 'debit' : 'credit',
   };
 }
 
@@ -64,7 +64,7 @@ export function rawToTransaction(raw: RawTransaction): Transaction | null {
       normalizedMerchant: raw.rawDescription.trim(), // updated by AI later
       amount,
       type,
-      categoryId: raw.rawCategory ? 'other' : 'other', // AI will update
+      categoryId: 'other', // AI will update
       accountId: raw.accountName ?? 'default',
       source: raw.source,
       tags: [],

@@ -45,14 +45,18 @@ export async function POST(req: NextRequest) {
 
     // AI results by description
     if (body.descriptionUpdates && Array.isArray(body.descriptionUpdates)) {
-      const updates = body.descriptionUpdates as { description: string; categoryId: string; subcategoryId?: string; normalizedMerchant: string; confidence: number }[];
+      const updates = (body.descriptionUpdates as { description: string; categoryId: string; subcategoryId?: string; normalizedMerchant: string; confidence: number }[])
+        .filter((u) => u.description && u.categoryId && u.categoryId.length > 0)
+        .slice(0, 5000);
       const saved = await dbRecategorizeByDescription(userId, updates);
       return NextResponse.json({ saved });
     }
 
     // Legacy: per-ID updates (used as fallback or for individual updates)
     if (body.updates && Array.isArray(body.updates)) {
-      const updates = body.updates as { id: string; categoryId: string; subcategoryId?: string; normalizedMerchant: string; confidence: number }[];
+      const updates = (body.updates as { id: string; categoryId: string; subcategoryId?: string; normalizedMerchant: string; confidence: number }[])
+        .filter((u) => u.id && u.categoryId && u.categoryId.length > 0)
+        .slice(0, 5000);
       if (updates.length === 0) return NextResponse.json({ saved: 0 });
       const saved = await dbBulkRecategorize(userId, updates);
       return NextResponse.json({ saved });
